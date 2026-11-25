@@ -12,7 +12,8 @@
    8. Projects: filters, sorting and cards
    9. GitHub repositories (API)
    10. Contact form
-   11. Responsive and accessibility rules
+   11. Digital garden (growing flower)
+   12. Responsive and accessibility rules
    ========================================================= */
 
 /* =========================================================
@@ -757,7 +758,271 @@ main {
 }
 
 /* =========================================================
-   RESPONSIVE AND ACCESSIBILITY RULES
+   11. DIGITAL GARDEN (GROWING FLOWER)
+   JavaScript sets data-stage="0" to "6" on #garden.
+   Each stage below shows one more part of the flower.
+   inset-inline-start puts it bottom-left in English and
+   bottom-right in Arabic.
+   ========================================================= */
+.garden {
+    position: fixed;
+    bottom: 20px;
+    inset-inline-start: 20px;
+    z-index: 50;
+}
+
+.garden-button {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 68px;
+    height: 68px;
+    padding: 9px;
+    border: 1px solid var(--border-strong);
+    border-radius: 22px;
+    background-color: var(--surface);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.garden-button:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+}
+
+.garden-button.is-bloomed {
+    border-color: var(--accent);
+}
+
+.garden-flower {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+/* Small progress label on the pot, e.g. "3/6" */
+.garden-count {
+    position: absolute;
+    bottom: -6px;
+    inset-inline-end: -6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background-color: var(--accent);
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 600;
+    direction: ltr;
+}
+
+/* Flower parts: fixed natural colors in both themes */
+.g-pot { fill: #C98B6B; }
+.g-soil { fill: #5A3A2A; }
+.g-seed { fill: #7A5236; transition: opacity 0.4s ease; }
+.g-stem {
+    fill: none;
+    stroke: #5E9E5A;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 0.6s ease;
+}
+.g-leaf {
+    fill: #7DBE6E;
+    transform-box: fill-box;
+    transform-origin: center;
+    scale: 0;
+    transition: scale 0.5s ease;
+}
+.g-bud { fill: var(--accent); scale: 0; transform-box: fill-box; transform-origin: center; transition: scale 0.5s ease; }
+.g-petals { fill: #F29BB8; scale: 0; transform-box: fill-box; transform-origin: center; transition: scale 0.6s ease; }
+.g-petals ellipse:nth-child(odd) { fill: var(--accent); }
+.g-center { fill: #F6C344; scale: 0; transform-box: fill-box; transform-origin: center; transition: scale 0.4s ease 0.2s; }
+
+/* Stage 1: sprout */
+.garden:not([data-stage="0"]) .g-seed { opacity: 0; }
+.garden[data-stage="1"] .g-stem { stroke-dashoffset: 0.7; }
+/* Stage 2: taller, first leaf */
+.garden[data-stage="2"] .g-stem { stroke-dashoffset: 0.45; }
+/* Stage 3: second leaf */
+.garden[data-stage="3"] .g-stem { stroke-dashoffset: 0.2; }
+/* Stages 4–6: full stem */
+.garden[data-stage="4"] .g-stem,
+.garden[data-stage="5"] .g-stem,
+.garden[data-stage="6"] .g-stem { stroke-dashoffset: 0; }
+.garden:is([data-stage="2"], [data-stage="3"], [data-stage="4"], [data-stage="5"], [data-stage="6"]) .g-leaf-left { scale: 1; }
+.garden:is([data-stage="3"], [data-stage="4"], [data-stage="5"], [data-stage="6"]) .g-leaf-right { scale: 1; }
+/* Stage 4: bud; stage 5: bud opening; stage 6: full bloom */
+.garden[data-stage="4"] .g-bud { scale: 0.8; }
+.garden[data-stage="5"] .g-bud { scale: 1; }
+.garden[data-stage="5"] .g-petals { scale: 0.55; }
+.garden[data-stage="6"] .g-petals { scale: 1; }
+.garden[data-stage="6"] .g-center { scale: 1; }
+
+/* Little bounce when the flower grows, a bigger one when it blooms */
+.garden-button.just-grew { animation: gardenGrow 0.6s ease; }
+.garden-button.just-bloomed { animation: gardenBloom 1.2s ease; }
+
+@keyframes gardenGrow {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+}
+
+@keyframes gardenBloom {
+    0% { transform: scale(1) rotate(0); box-shadow: 0 0 0 0 var(--hero-glow); }
+    40% { transform: scale(1.25) rotate(-6deg); }
+    70% { transform: scale(1.1) rotate(4deg); box-shadow: 0 0 0 18px transparent; }
+    100% { transform: scale(1) rotate(0); }
+}
+
+/* Message that appears above the pot for a few seconds */
+.garden-toast {
+    position: absolute;
+    bottom: 82px;
+    inset-inline-start: 0;
+    width: max-content;
+    max-width: min(300px, calc(100vw - 40px));
+    padding: 10px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background-color: var(--surface-raised);
+    color: var(--text);
+    font-size: 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    transform: translateY(6px);
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.garden-toast.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* The panel already shows the progress, so hide the message while it is open */
+.garden-panel:not([hidden]) ~ .garden-toast {
+    display: none;
+}
+
+/* Panel with the list of steps */
+.garden-panel {
+    position: absolute;
+    bottom: 82px;
+    inset-inline-start: 0;
+    width: min(320px, calc(100vw - 40px));
+    padding: 18px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background-color: var(--surface);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 0.25s ease;
+}
+
+.garden-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.garden-panel h2 {
+    font-size: 20px;
+}
+
+.garden-close {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    background: none;
+    color: var(--text);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.garden-close:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.garden-intro {
+    margin-top: 6px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.garden-stage {
+    margin-top: 10px;
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.garden-progress-bar {
+    height: 8px;
+    margin-top: 8px;
+    border-radius: 999px;
+    background-color: var(--bg);
+    overflow: hidden;
+}
+
+.garden-progress-bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background-image: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 0.5s ease;
+}
+
+.garden-progress {
+    margin-top: 6px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.garden-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px 0;
+    list-style: none;
+    font-size: 14px;
+}
+
+.garden-steps li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-soft);
+}
+
+.garden-steps li.is-done {
+    color: var(--text-faint);
+    text-decoration: line-through;
+}
+
+.garden-check {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 50%;
+    font-size: 12px;
+}
+
+.garden-steps li.is-done .garden-check {
+    border-color: var(--success);
+    background-color: var(--success);
+    color: #FFFFFF;
+}
+
+/* =========================================================
+   12. RESPONSIVE AND ACCESSIBILITY RULES
    (kept at the end so they override the rules above)
    ========================================================= */
 @media (max-width: 600px) {
@@ -776,6 +1041,26 @@ main {
 
     .section-header h2 {
         font-size: 22px;
+    }
+
+    /* Smaller pot, and room in the footer so it never covers the text */
+    .garden {
+        bottom: 14px;
+        inset-inline-start: 14px;
+    }
+
+    .garden-button {
+        width: 58px;
+        height: 58px;
+    }
+
+    .garden-toast,
+    .garden-panel {
+        bottom: 72px;
+    }
+
+    .site-footer {
+        padding-bottom: 96px;
     }
 }
 
