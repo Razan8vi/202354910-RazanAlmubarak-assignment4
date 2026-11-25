@@ -92,6 +92,12 @@ h1, h2, h3 {
     font-family: 'Tajawal', Arial, sans-serif;
 }
 
+/* Arabic: Tajawal for all text, and slightly taller lines for Arabic letters */
+:root[lang="ar"] body {
+    font-family: 'Tajawal', Arial, sans-serif;
+    line-height: 1.8;
+}
+
 a {
     color: var(--accent);
 }
@@ -278,6 +284,11 @@ textarea:focus-visible {
     font-weight: 800;
     letter-spacing: 1px;
     line-height: 1.2;
+}
+
+/* Letter spacing breaks the joined letters of Arabic words */
+:root[lang="ar"] .hero-inner h1 {
+    letter-spacing: 0;
 }
 
 .tagline {
@@ -468,7 +479,7 @@ main {
     flex-direction: column;
     background-color: var(--surface-raised);
     border: 1px solid var(--border-strong);
-    border-left: 4px solid var(--accent);
+    border-inline-start: 4px solid var(--accent);
     border-radius: 8px;
     padding: 18px;
     animation: fadeIn 0.3s ease;
@@ -477,7 +488,7 @@ main {
 
 .project-card:hover {
     transform: translateY(-3px);
-    border-left-color: var(--accent-2);
+    border-inline-start-color: var(--accent-2);
 }
 
 /* Same shape for every card image, so the grid stays even */
