@@ -92,7 +92,6 @@ Details in [`docs/technical-documentation.md`](docs/technical-documentation.md#8
 
 I used **Claude (Opus 5.5)** on claude.ai to plan the Assignment 4 features,
 generate and explain the code for the Arabic / English switch and the digital
-garden, test the site in a browser, find and fix bugs, and draft the
-documentation and slides. I reviewed and tested everything myself, and I can
+garden, test the site in a browser, find and fix bugs. I reviewed and tested everything myself, and I can
 explain each part of the code. Full details, the usage log, and my declaration
 are in [`docs/ai-usage-report.md`](docs/ai-usage-report.md).
