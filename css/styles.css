@@ -118,6 +118,14 @@ textarea:focus-visible {
     display: none !important;
 }
 
+/* Message for visitors who turned JavaScript off */
+.noscript-message {
+    padding: 12px;
+    background-color: var(--surface-raised);
+    color: var(--text);
+    text-align: center;
+}
+
 /* Hide content visually but keep it for screen readers */
 .visually-hidden {
     position: absolute;
