@@ -4,7 +4,7 @@
    Every piece of text on the site, in English ("en") and
    Arabic ("ar"). The keys are used in two places:
    - index.html: data-i18n="key" (and data-i18n-placeholder,
-     data-i18n-aria-label) on static elements
+     data-i18n-aria-label, data-i18n-title) on static elements
    - js/script.js: t("key", { values }) for text built by JavaScript
 
    {name} inside a string is replaced with values.name.

@@ -100,7 +100,7 @@ function debounce(callback, delay) {
    4. LANGUAGE (ARABIC / ENGLISH)
    - t(key, values) returns the text for the current language.
    - Static text in index.html is marked with data-i18n,
-     data-i18n-placeholder and data-i18n-aria-label.
+     data-i18n-placeholder, data-i18n-aria-label and data-i18n-title.
    - Text built by JavaScript is redrawn by the functions that
      register themselves with onLanguageChange().
    - Arabic switches the page to right-to-left (dir="rtl").
@@ -148,6 +148,9 @@ function translateStaticText() {
     });
     document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
         element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel));
+    });
+    document.querySelectorAll("[data-i18n-title]").forEach((element) => {
+        element.title = t(element.dataset.i18nTitle);
     });
     document.title = t("page.title");
 }
