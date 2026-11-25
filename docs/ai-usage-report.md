@@ -1,80 +1,81 @@
-# AI Usage Report – Assignment 3
+# AI Usage Report – Assignment 4
 
 ## 1. Tools Used
 
 | Tool | How I used it |
 |---|---|
-| **Claude (Opus 5.5)** – claude.ai | Checking the Assignment 3 requirements against my Assignment 2 code, planning the features, generating and explaining code (GitHub API, project filters and sorting, contact form rules, saved state, timer), compressing the images, testing the site in a browser, finding and fixing bugs, running Lighthouse, and drafting the documentation. 
+| **Claude (Opus 5.5)** – claude.ai | Checking the Assignment 4 requirements against my Assignment 3 code, brainstorming creative feature ideas, generating and explaining the code for the Arabic / English switch and the digital garden, testing the site in a browser (English, Arabic, phone size), finding and fixing bugs, running Lighthouse, and drafting the documentation, slides, and presentation script. |
 
 ## 2. Usage Log
 
 | ID | Tool (model) | Date | Purpose | Files affected | What I changed and how I verified it |
 |---|---|---|---|---|---|
-| C01 | Claude (Opus 5.5) | 2026-11-21 | One conversation for the whole assignment: understanding the requirements, planning, code, testing, Git help, and documentation | All files listed in A01–A09 | I followed the plan step by step, created and pushed the repository myself, enabled GitHub Pages, and asked Claude to explain the parts I did not understand. |
-| A01 | Claude (Opus 5.5) | 2026-11-21 | Compress and resize the project images, fix the duplicated `<ul>`, add `defer`, `preconnect`, and lazy loading | `assets/images/`, `index.html` | I checked that both images still look right in the cards and compared the file sizes (687 KB → 36 KB). |
-| A02 | Claude (Opus 5.5) | 2026-11-21 | Light/dark theme with CSS variables, visitor name, visit counter, and Hide/Show buttons, all saved in `localStorage` | `index.html`, `css/styles.css`, `js/script.js` | I tested the theme toggle, saving and changing my name, and hiding a section, then reloaded the page to check that each choice was remembered. |
-| A03 | Claude (Opus 5.5) | 2026-11-21 | Project data array with category + level filters, search, and sorting | `index.html`, `css/styles.css`, `js/script.js` | I checked that my project descriptions and dates are correct, and tested several filter combinations, the empty message, and the Reset button. |
-| A04 | Claude (Opus 5.5) | 2026-11-21 | GitHub REST API section with loading, error, retry, empty state, and caching | `index.html`, `css/styles.css`, `js/script.js` | I opened the site and checked that my real repositories appear. I tested the error message by turning off my internet connection and clicking **Try again** after turning it back on. |
-| A05 | Claude (Opus 5.5) | 2026-11-21 | Contact form rules, reason field with the extra project link field, character counter, disabled Send button | `index.html`, `css/styles.css`, `js/script.js` | I tested an empty form, a wrong email, a short message, a wrong project link, and a fully valid form. |
-| A06 | Claude (Opus 5.5) | 2026-11-21 | Time-on-site timer in the footer | `index.html`, `css/styles.css`, `js/script.js` | I watched the timer count and reloaded the page to check that it continues. |
-| A07 | Claude (Opus 5.5) | 2026-11-21 | Automated browser tests, bug fixes, smaller images with `srcset`, and Lighthouse | `css/styles.css`, `js/script.js`, `index.html`, `assets/images/` | Claude found the bugs listed in section 8 of the technical documentation (hidden form still showing, Arabic name order, favicon 404). I read each fix to understand the cause. The Lighthouse scores in the documentation were measured by Claude during testing. |
-| A08 | Claude (Opus 5.5) | 2026-11-21 | First drafts of the README, the technical documentation, and this report | `README.md`, `docs/` | I read the drafts, checked that they match what the site actually does, and edited the wording. |
-| A09 | Claude (Opus 5.5) | 2026-11-21 | Text for the list of AI-assisted commits and the new format of this report | `docs/ai-usage-report.md` | I checked that every commit with AI-assisted code is listed and that the table follows the required format. |
+| C01 | Claude (Opus 5.5) | 2026-11-25 | One conversation for the whole assignment: requirements, feature ideas, code, testing, Git help, documentation, and presentation | All files listed in A01–A06 | I chose the features myself (from a list of ideas, I picked the Arabic / English switch and the digital garden and dropped the others), created and pushed the repository, enabled GitHub Pages, and asked Claude to explain the parts I did not understand. |
+| A01 | Claude (Opus 5.5) | 2026-11-25 | Arabic / English switch: translations file, `t()` helper, right-to-left layout, Arabic font, redrawing every feature in the chosen language | `js/i18n.js`, `js/script.js`, `index.html`, `css/styles.css` | I read all the Arabic texts and corrected the wording where needed, switched the language in every section, and checked the right-to-left layout on my laptop and phone. |
+| A02 | Claude (Opus 5.5) | 2026-11-25 | Digital garden: SVG flower with 7 stages, step detection, progress panel, saved progress | `index.html`, `css/styles.css`, `js/script.js`, `js/i18n.js` | I explored the site to grow the flower to full bloom, opened and closed the panel, reloaded to check it was saved, and used **Plant a new seed**. |
+| A03 | Claude (Opus 5.5) | 2026-11-25 | Automated browser tests, bug fixes (leaf position, drawing order, toast over the panel), no-JavaScript message, accessibility fix for the language button | `css/styles.css`, `js/script.js`, `index.html` | I read each fix in section 10 of the technical documentation to understand the cause. The Lighthouse scores in the documentation were measured by Claude during testing. |
+| A04 | Claude (Opus 5.5) | 2026-11-25 | First drafts of the README, the technical documentation, the user guide, and this report | `README.md`, `docs/` | I read the drafts, checked that they match what the site does, and edited the wording. |
+| A05 | Claude (Opus 5.5) | 2026-11-25 | Presentation slides | `presentation/slides.pdf` | I reviewed every slide and adjusted the content to how I want to present. |
+| A06 | Claude (Opus 5.5) | 2026-11-25 | Presentation script with timings (used to record the video; not in the repository) | `presentation/demo-video.mp4` (recorded by me) | I rewrote the script in my own words, practiced it, and recorded the video myself with my own voice and screen. |
 
+**AI-assisted commits:** the commits below contain work made with Claude's help.
+The first commit (`Start Assignment 4 from Assignment 3 portfolio`) only copied
+my Assignment 3 files.
 
-- Compress project images and improve page loading
-- Add saved light/dark theme, visitor name and section toggles
-- Add project filtering by category and level, sorting and search
-- Show my latest GitHub repositories using the GitHub REST API
-- Improve contact form with step-by-step checks and a reason field
-- Add a time-on-site timer to the footer
-- Serve smaller images with srcset and tidy the HTML head
-- Update README, technical documentation and AI usage report for Assignment 3
-- Update page weight in the Lighthouse tables after the final test
+- Add Arabic / English language switch with right-to-left layout
+- Add a digital garden: a flower that grows while visitors explore
+- Add a no-JavaScript message and fix the language button label
+- Write the Assignment 4 documentation and user guide
+- Add the presentation slides
 
 ## 3. Benefits & Challenges
 
 **Benefits:**
 
-- Claude explained *why* each piece is written the way it is (for example, why
-  the theme script must run in `<head>`, or why the API is called only when the
-  section is visible), which helped me understand assigments and the code ,
-- Automated browser tests found bugs I would not have noticed easily, such as
-  the `hidden` attribute being overridden by `display: flex`.
-- Lighthouse showed clearly how much the image compression helped
-  (Performance 82 → 100).
+- Claude gave me many feature ideas, which helped me pick ones that feel like
+  me: an Arabic version of my site and a flower that matches my style.
+- It explained how translation systems work (keys, a lookup function, and
+  redrawing on change), so I understand how to add another language later.
+- Browser tests found layout bugs in the SVG flower that I would not have
+  noticed without zooming in on each stage.
 
 **Challenges:**
 
-- The amount of new code was large, so I had to read  and write it section by section
-  (the script is split into 11 numbered sections to make this easier).
-- The GitHub API could not be reached from Claude's test environment, so the
-  API responses were simulated in the tests. I had to check the real API
-  myself in my browser.
-- Some project details (dates, descriptions) had to be checked by me, because
-  the AI could not know them.
+- Translating text built by JavaScript was harder than static text: every
+  feature had to redraw itself when the language changes.
+- Right-to-left layouts need care: some CSS (borders, positions, letter
+  spacing) behaves differently in Arabic.
+- I had to check the Arabic texts myself, because natural wording matters more
+  than a literal translation.
 
 ## 4. Learning Outcomes
 
-- Calling a REST API with `fetch`, `async/await`, `try/catch/finally`, and
-  running two requests together with `Promise.all`
-- Cancelling a slow request with `AbortController`, and reading the HTTP status
-- Turning technical errors into messages visitors understand
-- Protecting the page from HTML injection with `escapeHTML()`
-- Combining several conditions in `filter()`, sorting a copy with `sort()`, and
-  drawing the result with `map()` + template literals
-- Saving and restoring state with `localStorage` / `sessionStorage` and `JSON`
-- CSS variables for theming, and `prefers-color-scheme` / `prefers-reduced-motion`
-- `IntersectionObserver`, `debounce`, `setInterval`, and custom events
-- Image optimization (WebP, `srcset`, lazy loading) and measuring with Lighthouse
-- Git feature branches and `--no-ff` merges for each feature
+- Internationalization (i18n): translation keys, `data-*` attributes, a
+  lookup function with placeholders, and fallbacks
+- Right-to-left layouts with `dir="rtl"` and logical CSS properties
+  (`inset-inline-start`, `border-inline-start`)
+- Unicode isolate marks for mixed Arabic / English text, and `Intl` locales for
+  dates (Gregorian calendar, Latin digits)
+- `IntersectionObserver` to detect what the visitor has seen
+- Custom events (`garden:step`) to keep features independent from each other
+- SVG drawing and CSS-driven animation (`stroke-dashoffset`, `scale`,
+  `transform-box`), and respecting `prefers-reduced-motion`
+- Accessible dialogs: `aria-expanded`, focus return, Escape to close
 
 ## 5. Responsible Use & Modifications
-I did not submit any code that I cannot explain. Claude was used as a learning, planning, and debugging assistant. I reviewed the suggestions, wrote and implemented the code myself, edited js/script.js, css/styles.css, and index.html, and made the necessary changes to the project. I also checked that the information about me and my projects was accurate and tested every feature in my own browser, including the live GitHub API.
 
-The design, colors, fonts, and layout are my own work from Assignments 1 and 2. No personal data is sent anywhere; the visitor name and settings remain stored in the visitor’s own browser.
+I did not submit code I cannot explain. I reviewed `js/i18n.js`,
+`js/script.js`, `css/styles.css`, and `index.html` section by section, checked
+the Arabic texts and my project details, and tested every feature in my own
+browser, including the live GitHub API. The design (colors, fonts, layout) is
+my own from earlier assignments. No personal data is sent anywhere: the
+visitor's name, choices, and flower stay in their own browser.
 
-The complete, unedited Claude conversation in the `conversations/` folder and the original AI outputs before my edits in the `artifacts/` folder are included in `202354910-RazanAlmubarak-assignment3-ai-evidence.zip`, which was submitted on Blackboard.
+The complete, unedited Claude conversation (`conversations/`) and the original
+AI outputs before my edits (`artifacts/`) are included in
+`202354910-RazanAlmubarak-assignment4-ai-evidence.zip`, submitted on
+Blackboard.
+
 ## 6. Declaration
 
 > I declare that this report and the attached evidence document all of my AI
@@ -85,4 +86,4 @@ The complete, unedited Claude conversation in the `conversations/` folder and th
 
 - **Name:** Razan Almubarak
 - **ID:** 202354910
-- **Date:** 2026-11-21
+- **Date:** 2026-11-25

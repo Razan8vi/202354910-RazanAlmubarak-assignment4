@@ -1,25 +1,39 @@
-# Technical Documentation – Assignment 3
+# Technical Documentation – Assignment 4
 
 ## 1. Overview
 
-This document explains how my portfolio works and what changed in Assignment 3.
-The site uses plain HTML, CSS, and JavaScript with no frameworks or libraries.
-Assignment 3 adds:
+This is the final version of my personal portfolio for SWE 363. It brings
+together everything from Assignments 1–3 and adds two new features:
 
-- an external API (GitHub REST API),
-- multi-step logic (project filters + sort, a contact form with rules, a timer),
-- saved state (theme, visitor name, hidden sections, filters),
-- performance improvements, measured with Lighthouse.
+- **Arabic / English switch** – the whole site, including text built by
+  JavaScript, changes language and direction (right-to-left for Arabic).
+- **Digital garden** – a small flower in the corner grows one stage for every
+  part of the site the visitor explores, and blooms when they have seen it all.
+
+The site uses plain HTML, CSS, and JavaScript, with no frameworks, libraries,
+or build step, and is deployed with GitHub Pages.
+
+| Assignment | What it added |
+|---|---|
+| A1 | Responsive layout, About / Projects / Contact, time-of-day greeting |
+| A2 | Live project search, contact form validation, animated feedback |
+| A3 | GitHub REST API, filters + sorting, saved theme and visitor name, show/hide sections, timer, image optimization |
+| **A4** | **Arabic / English with RTL, digital garden, no-JavaScript message, accessibility fixes, final documentation and presentation** |
 
 ## 2. File Structure
 
 | File | Purpose |
 |---|---|
-| `index.html` | Page structure: header, About, Projects, GitHub, Contact, footer |
-| `css/styles.css` | All styles. Colors are CSS variables, so one file serves both themes |
-| `js/script.js` | All features, split into 11 numbered sections (listed at the top of the file) |
+| `index.html` | Page structure. Static text carries `data-i18n` keys |
+| `css/styles.css` | All styles in 12 numbered sections. Colors are CSS variables, so one file serves both themes |
+| `js/i18n.js` | `TRANSLATIONS`: every text in English and Arabic |
+| `js/script.js` | All features in 13 numbered sections (listed at the top of the file) |
 | `assets/images/` | Project images in WebP (large + 400 px versions) |
-| `docs/` | AI usage report and this document |
+| `docs/` | This document, the user guide, and the AI usage report |
+| `presentation/` | `slides.pdf` and `demo-video.mp4` |
+
+Both scripts are loaded with `defer`: they run in order (`i18n.js` first) after
+the HTML is parsed, without blocking the page from drawing.
 
 ### JavaScript sections (`js/script.js`)
 
@@ -28,221 +42,274 @@ Assignment 3 adds:
 | 1 | Settings and storage keys | `GITHUB_USERNAME`, `STORAGE_KEYS` |
 | 2 | Storage helpers | `readStorage()`, `writeStorage()`, `removeStorage()` |
 | 3 | Utilities | `escapeHTML()`, `debounce()` |
-| 4 | Theme | `applyTheme()`, `initTheme()` |
-| 5 | Visitor name and greeting | `validateVisitorName()`, `countVisit()`, `renderGreeting()` |
-| 6 | Show / hide sections | `setSectionVisibility()`, `initSectionToggles()` |
-| 7 | Projects | `filterProjects()`, `sortProjects()`, `renderProjects()`, `updateProjects()` |
-| 8 | GitHub API | `fetchJSON()`, `loadGitHubData()`, `getFriendlyErrorMessage()`, `prepareRepos()` |
-| 9 | Contact form | `validators`, `validateForm()`, `updateFormState()`, `handleContactSubmit()` |
-| 10 | Timer | `formatDuration()`, `initTimer()` |
-| 11 | Start | Calls every `init...()` function once |
+| 4 | **Language** | `t()`, `applyLanguage()`, `onLanguageChange()`, `translateStaticText()` |
+| 5 | Theme | `applyTheme()`, `initTheme()` |
+| 6 | Visitor name and greeting | `validateVisitorName()`, `countVisit()`, `renderGreeting()` |
+| 7 | Show / hide sections | `setSectionVisibility()`, `initSectionToggles()` |
+| 8 | Projects | `filterProjects()`, `sortProjects()`, `renderProjects()`, `updateProjects()` |
+| 9 | GitHub API | `fetchJSON()`, `loadGitHubData()`, `getFriendlyErrorMessage()`, `prepareRepos()` |
+| 10 | Contact form | `validators`, `validateForm()`, `updateFormState()`, `handleContactSubmit()` |
+| 11 | Timer | `formatDuration()`, `initTimer()` |
+| 12 | **Digital garden** | `completeGardenStep()`, `renderGarden()`, `watchGardenSections()` |
+| 13 | Start | Calls every `init...()` function once; `initLanguage()` runs last |
 
-The script is loaded with `defer`, so it runs after the HTML is ready and does
-not block the page from drawing.
+## 3. Arabic / English Switch
 
-## 3. API Integration – GitHub REST API
-
-**Endpoints** (public, no API key needed):
-
-- `GET https://api.github.com/users/Razan8vi` – name, avatar, number of repositories, followers
-- `GET https://api.github.com/users/Razan8vi/repos?per_page=100` – repositories
-
-**Flow (`loadGitHubData`)**
-
-1. If a cached copy in `sessionStorage` is younger than 10 minutes, show it and stop.
-2. Otherwise show a loading message and three skeleton cards.
-3. Send both requests at the same time with `Promise.all`.
-4. `fetchJSON()` uses an `AbortController` to cancel a request after 8 seconds,
-   and throws an error with the HTTP status when `response.ok` is false.
-5. `prepareRepos()` removes forks, sorts by the last push date (newest first),
-   keeps 6 repositories, and keeps only the fields the page needs.
-6. Save the result in `sessionStorage` and draw the profile and repository cards.
-7. Any error goes to `catch`, which shows a friendly message and a **Try again** button.
-
-**When is the API called?** An `IntersectionObserver` starts the request only
-when the GitHub section is 200 px away from the screen. A hidden section is
-never "visible", so it is loaded only after the visitor clicks **Show**. This
-saves requests (GitHub allows 60 per hour without a key).
-
-**Error handling (`getFriendlyErrorMessage`)**
-
-| Situation | Message shown |
-|---|---|
-| No internet (`navigator.onLine` is false) | "You seem to be offline. Check your internet connection and try again." |
-| No answer after 8 seconds (`AbortError`) | "GitHub is taking too long to respond. Please try again." |
-| Rate limit (status 403/429 or `x-ratelimit-remaining: 0`) | "GitHub's hourly request limit was reached. Please try again in a few minutes." |
-| User not found (404) | "The GitHub profile could not be found." |
-| Anything else | "Sorry, my GitHub projects could not be loaded right now. Please try again later." |
-| Request worked but no repositories | "No public repositories yet. New projects will appear here automatically." |
-
-**Security:** repository names and descriptions come from outside the site, so
-`escapeHTML()` converts `<`, `>`, `&`, `"`, and `'` before the text is inserted
-with `innerHTML`. I tested this with a fake repository named
-`<img src=x onerror=alert(1)>`; it appears as plain text and no code runs.
-
-## 4. Complex Logic
-
-### 4.1 Project filter, level, search, and sort
-
-Projects are stored in the `PROJECTS` array (title, description, category,
-level, date, tags, optional image and link) and drawn by JavaScript.
-Every change goes through the same pipeline:
+### How text is translated
 
 ```
-category filter → level filter → keyword search → sort → render
+TRANSLATIONS = { en: { "nav.about": "About", ... }, ar: { "nav.about": "نبذة عني", ... } }
 ```
 
-- `filterProjects()` keeps a project only when **all three** conditions are true:
-  `category === "all" || project.category === category`, the same for level, and
-  the search text appears in the title, description, or tags.
-- `sortProjects()` sorts a **copy** of the array (`[...projects]`) by date
-  (`"2026-10"` strings compare correctly with `localeCompare`) or by title.
-- `renderProjects()` builds the cards, updates "Showing X of 5 projects",
-  shows the message for the chosen level (`LEVEL_MESSAGES`), and updates the
-  active category button (`aria-pressed`).
-- The empty message is built from the active filters, for example
-  *"No beginner Mobile projects yet."* or *"No projects match "zzz"."*.
-- The **Reset filters** button appears only when something differs from the default.
-- The search waits 200 ms after the last key press (`debounce`) before redrawing.
+- **Static text** in `index.html` has a key: `data-i18n` (text),
+  `data-i18n-placeholder`, `data-i18n-aria-label`, or `data-i18n-title`.
+  `translateStaticText()` fills them all and translates `document.title`.
+- **Text built by JavaScript** uses `t(key, values)`, for example
+  `t("projects.count", { shown: 3, total: 6 })` → "Showing 3 of 6 projects" /
+  "عرض 3 من أصل 6 مشاريع". `{name}` placeholders are filled from `values`.
+  When a sentence needs logic (the empty-projects message has a different word
+  order in Arabic), the translation is a small function instead of a string.
+- `t()` falls back to English if a key is missing in Arabic, and logs a
+  warning, so a missing translation never breaks the page.
+- **Projects** store each text field in both languages
+  (`title: { en, ar }`). The search looks at both languages, so "UML" and
+  "طويق" both work whichever language is shown.
 
-### 4.2 Contact form
+### Redrawing in the other language
 
-| Field | Rules |
+Each feature registers a redraw function with `onLanguageChange()`.
+`applyLanguage()` sets `<html lang>` and `dir`, translates the static text,
+and then calls every registered function:
+
+| Feature | What is redrawn |
 |---|---|
-| Name | Not empty, at least 2 characters, letters only (any language, so Arabic names work) |
-| Email | Not empty, matches `/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/` |
-| Reason | One option must be chosen |
-| Project link | Only shown for "Project collaboration"; optional, but if filled it must be a valid `http(s)` URL (checked with `new URL()`) |
-| Message | 10 to 500 characters, with a live counter that turns red after 450 |
+| Theme | Button label |
+| Visitor | Greeting and any visible name error |
+| Sections | Hide / Show labels and their `aria-label` |
+| Projects | Cards, level message, counter, empty message, dates |
+| GitHub | Loading, error, or data view (kept in `githubView`) |
+| Contact | Reason note, field errors, the "still needed" hint, button, confirmation (kept in `lastSentMessage`) |
+| Garden | Button label, stage, progress, step list |
 
-Steps:
+### Right-to-left layout
 
-1. Each field has its own function in the `validators` object, which returns an
-   error message or an empty string.
-2. A field is "touched" after the visitor leaves it. Only touched fields show
-   their errors, so the form is not red before the visitor types anything.
-3. After every change `updateFormState()` checks all fields. The **Send** button
-   is disabled until all rules pass, and a hint lists what is still missing,
-   e.g. *"To enable the Send button, add a valid email, a reason."*
-4. On submit, all fields are checked again. If one is wrong, the first wrong
-   field gets focus. If everything is right, the button shows "Sending…" for one
-   second, then a personal confirmation appears and the form is cleared.
-5. Each reason shows a different note under the select (`REASONS`).
+- `dir="rtl"` on `<html>` flips Flexbox and Grid automatically.
+- Direction-specific CSS uses logical properties (`border-inline-start`,
+  `inset-inline-start`), so the project cards' accent border and the garden
+  move to the right side in Arabic.
+- Arabic uses the **Tajawal** font for all text, a taller `line-height`, and
+  `letter-spacing: 0` on the big heading (letter spacing breaks joined Arabic
+  letters).
+- Names and email addresses inside sentences are wrapped in Unicode isolate
+  marks (`⁨ … ⁩`), so an Arabic name in English text (or the reverse)
+  appears in the right order.
+- Dates and relative times use `ar-SA-u-ca-gregory-nu-latn`: Arabic month
+  names with the Gregorian calendar and Latin digits ("نوفمبر 2026").
 
-### 4.3 Time-on-site timer
+### Saved choice without a flash
 
-`initTimer()` saves the start time in `sessionStorage`. Every second it shows
-`Date.now() - startTime` as `mm:ss` (or `h:mm:ss` after an hour) using
-`formatDuration()`. It skips the update when the tab is hidden
-(`document.hidden`), and reloading the page keeps the same start time.
+The choice is saved in `localStorage` (`portfolio.language`). The small script
+in `<head>` reads it and sets `lang="ar" dir="rtl"` **before** the page is
+drawn, so the layout never jumps from left-to-right to right-to-left. English
+is the default for first-time visitors.
 
-## 5. State Management
+## 4. Digital Garden
 
-All saved values go through `readStorage()` / `writeStorage()`. They use
-`JSON.parse` / `JSON.stringify` and a `try/catch`, so the site still works when
-storage is blocked (for example in some private browsing modes).
+### Steps
 
-| Key | Storage | Value | Used for |
-|---|---|---|---|
-| `portfolio.theme` | localStorage | `"light"` or `"dark"` | Theme toggle |
-| `portfolio.visitorName` | localStorage | e.g. `"Sara"` | Greeting and contact form |
-| `portfolio.visitCount` | localStorage + sessionStorage | number / `true` | "This is visit number 3" (counted once per session) |
-| `portfolio.hiddenSections` | localStorage | e.g. `["about"]` | Hide / Show buttons |
-| `portfolio.projectFilters` | localStorage | `{ category, level, sort }` | Restores the project filters |
-| `portfolio.githubCache` | sessionStorage | profile + repos + time | 10-minute API cache |
-| `portfolio.sessionStart` | sessionStorage | timestamp | Timer |
-
-**Theme without a flash:** a small script in `<head>` reads the saved theme (or
-the system preference from `prefers-color-scheme`) and sets
-`<html data-theme="...">` **before** the page is drawn. All colors in
-`styles.css` are CSS variables defined for `[data-theme="dark"]` and
-`[data-theme="light"]`, so changing the attribute recolors the whole page.
-
-**Saved values are checked:** if an old or edited value in storage is not
-valid (e.g. an unknown category), `initProjects()` falls back to the default.
-
-## 6. Accessibility
-
-- Semantic HTML (`header`, `nav`, `main`, `section`, `footer`) and one `h1`.
-- Every input has a `<label>`; errors are linked with `aria-describedby` and
-  announced with `aria-live="polite"`; wrong fields get `aria-invalid="true"`.
-- Toggle buttons use `aria-pressed` (theme, categories) and `aria-expanded` +
-  `aria-controls` (Hide / Show).
-- Links that open a new tab say so to screen readers.
-- Visible keyboard focus (`:focus-visible`) and colors checked for contrast in
-  both themes (Lighthouse Accessibility: 100).
-- Animations are turned off for visitors who choose reduced motion
-  (`prefers-reduced-motion`).
-
-## 7. Performance
-
-| Change | Effect |
+| Step | How it is detected |
 |---|---|
-| Converted the two JPG images (368 KB + 319 KB, up to 2939 px wide) to WebP at 640–800 px, plus 400 px versions | Images went from 687 KB to 36 KB in total |
-| `srcset` + `sizes` on project images | Small screens download the 400 px version |
-| `loading="lazy"` and `width` / `height` on images | Off-screen images load later; no layout jump |
-| `defer` on the script | HTML is drawn without waiting for JavaScript |
-| `preconnect` to Google Fonts and the GitHub API, removed an unused font weight | Faster font and API connections |
-| API called only when the section is on screen, cached for 10 minutes | Fewer requests, instant on reload |
-| `debounce` on search; timer skips hidden tabs | Less work while typing / in the background |
-| One `renderProjects()` function and shared CSS classes (`.field`, `.btn-pill`) | No repeated code |
-| Removed unused files and code (old JPGs, the duplicated `<ul>`, Assignment 2 code that the new features replaced) | Smaller, cleaner files |
+| `about`, `projects`, `github` | `IntersectionObserver` with `threshold: 0.35`: about a third of the section was on screen |
+| `theme` | The theme button sends a `garden:step` event |
+| `language` | The language button sends a `garden:step` event |
+| `message` | A successful contact form submission sends a `garden:step` event |
 
-**Lighthouse results** (Chrome Lighthouse 12, local server):
+Features never call the garden directly; they only dispatch
+`new CustomEvent("garden:step", { detail: "theme" })`. This keeps the garden
+separate from the rest of the code.
 
-| | Performance | Accessibility | Best Practices | SEO | Page weight | LCP |
-|---|---|---|---|---|---|---|
-| Assignment 2 (mobile) | 82 | 95 | 96 | 91 | 685 KB | 4.8 s |
-| Assignment 3 (mobile) | 100 | 100 | 96 | 100 | 92 KB | 1.4 s |
-| Assignment 3 (desktop) | 100 | 100 | 96 | 100 | 92 KB | 0.4 s |
+### Flow (`completeGardenStep`)
 
-The remaining Best Practices point was a console message caused by the test
-machine having no access to external sites. Lighthouse also suggests
-compression and cache headers, which depend on the web server (GitHub Pages
-compresses files automatically), not on the code.
+1. Ignore unknown steps and steps that are already done.
+2. Add the step to the `gardenDone` set and save it (`portfolio.garden`).
+3. `renderGarden()` sets `data-stage="0"`–`"6"` on `#garden` and updates the
+   label, counter (`3/6`), progress bar, and step list.
+4. Show a short message and play a CSS animation once (`just-grew`, or
+   `just-bloomed` when all six steps are done).
 
-## 8. Problems Found and Fixed (Debugging)
+### Drawing the flower
 
-| Problem | Cause | Fix |
+The flower is one inline SVG (pot, soil, seed, stem, two leaves, bud, petals,
+center). JavaScript only changes `data-stage`; CSS decides what each stage
+shows:
+
+| Stage | What appears |
+|---|---|
+| 0 | Seed in the soil |
+| 1–3 | Stem grows (`stroke-dashoffset` on a path with `pathLength="1"`), then one and two leaves (`scale`) |
+| 4 | Bud |
+| 5 | Bud with half-open petals |
+| 6 | Full bloom with a yellow center |
+
+Each leaf sits in a `<g>` that positions and rotates it, and CSS scales the
+leaf itself. This avoids a bug found during testing: when the rotation and the
+CSS `scale` were on the same element, `transform-origin` moved the leaves away
+from the stem.
+
+### Panel and accessibility
+
+- The pot is a `<button>` with `aria-expanded` / `aria-controls` and a
+  translated `aria-label` ("Your flower: 3 of 6 steps done…").
+- The panel (`role="dialog"`) lists the steps; each has visually hidden
+  "(done)" / "(not done yet)" text for screen readers.
+- Escape or a click outside closes the panel and returns focus to the pot.
+- The message under the pot uses `role="status"`, so screen readers announce
+  it. It is hidden while the panel is open (the panel already shows progress).
+- With `prefers-reduced-motion`, all animations and transitions are turned off.
+- The pot sits bottom-left in English and bottom-right in Arabic, and the
+  footer gets extra space on phones so the pot never covers its text.
+
+## 5. Features Kept from Assignment 3
+
+### GitHub REST API
+
+- `GET /users/Razan8vi` and `GET /users/Razan8vi/repos` run together with
+  `Promise.all`; `fetchJSON()` stops after 8 seconds with `AbortController`.
+- Loaded only when the section is near the screen (`IntersectionObserver`),
+  and cached in `sessionStorage` for 10 minutes.
+- Friendly, translated messages for offline, timeout, rate limit (403/429),
+  not found (404), and other errors, with a **Try again** button.
+- Text from the API goes through `escapeHTML()` before it is inserted.
+
+### Projects: filter, level, search, sort
+
+`category filter → level filter → search → sort → render`. Each level shows its
+own message, the counter shows "Showing X of 6 projects", the empty message
+names the active filters, and the choices are saved.
+
+### Contact form
+
+Rules for name (letters, 2+), email, reason, optional project link (only for
+"Project collaboration", must be `http(s)`), and message (10–500 characters).
+Errors appear after a field is left, the Send button stays disabled with a
+hint listing what is missing, and a confirmation follows a short "Sending…"
+step. No backend is connected.
+
+### Saved state
+
+| Key | Storage | Used for |
 |---|---|---|
-| The visitor name form stayed visible after saving a name | `.visitor-form { display: flex }` overrides the `hidden` attribute | Added `[hidden] { display: none !important; }` |
-| Arabic names appeared in the wrong order inside the English greeting ("!سارة") | Mixed right-to-left and left-to-right text | Wrapped the name in Unicode isolate marks (`⁨` … `⁩`) |
-| Browser console showed a 404 for `favicon.ico` | No favicon | Added a small inline SVG favicon |
-| A failed API call was logged as a console error and lowered Lighthouse Best Practices | `console.error` in the `catch` | Changed to `console.warn`; the visitor still sees the friendly message |
-| Duplicated `<ul class="projects-list">` from Assignment 2 | Copy/paste mistake | Removed; the list is now created by JavaScript |
+| `portfolio.theme` | localStorage | Light / dark mode |
+| `portfolio.language` | localStorage | Arabic / English |
+| `portfolio.garden` | localStorage | Finished garden steps |
+| `portfolio.visitorName` | localStorage | Greeting and contact form |
+| `portfolio.visitCount` | localStorage + sessionStorage | Visit counter |
+| `portfolio.hiddenSections` | localStorage | Hide / Show buttons |
+| `portfolio.projectFilters` | localStorage | Category, level, sort |
+| `portfolio.githubCache` | sessionStorage | 10-minute API cache |
+| `portfolio.sessionStart` | sessionStorage | Timer |
+
+All reads and writes go through `try/catch`, so the site still works when
+storage is blocked.
+
+## 6. Error Handling
+
+| Situation | What the visitor sees |
+|---|---|
+| GitHub API fails | Translated message explaining why + **Try again** |
+| No public repositories | "No public repositories yet…" |
+| Filters match nothing | A message naming the filters, + **Reset filters** |
+| Invalid form input | Message under the field, red border, Send disabled |
+| `localStorage` blocked | Site works; choices are just not remembered |
+| Missing translation | English text is shown and a warning is logged |
+| JavaScript turned off | Short English and Arabic `<noscript>` message |
+| Old browser without `IntersectionObserver` | GitHub loads immediately; garden counts the other steps |
+
+## 7. Accessibility
+
+- Semantic landmarks, one `h1`, labels on every input, errors linked with
+  `aria-describedby` and announced with `aria-live`.
+- `aria-pressed` on toggles, `aria-expanded` + `aria-controls` on Hide / Show
+  and the garden button.
+- `<html lang>` changes with the language, so screen readers switch voice;
+  the language button has `lang="ar"` / `lang="en"` on its own text.
+- Visible `:focus-visible` outline, contrast checked in both themes,
+  `prefers-reduced-motion` respected.
+- Lighthouse Accessibility: **100**. The "label-content-name-mismatch" warning
+  was fixed by keeping the language button's visible text as its name.
+
+## 8. Performance
+
+| Measure | Effect |
+|---|---|
+| WebP images with `srcset` (400 px + large) and `loading="lazy"` | Images: 687 KB in A2 → 36 KB |
+| `width` / `height` on images | No layout shift |
+| `defer` on both scripts, `preconnect` to fonts and API | Faster first paint |
+| API only when the section is visible, cached 10 minutes | Fewer requests |
+| Garden animations use CSS (`transform`, `scale`, `stroke-dashoffset`) | Smooth, no JavaScript animation loop |
+| Debounced search; timer skips hidden tabs | Less work |
+
+**Lighthouse** (Chrome Lighthouse 12, local server):
+
+| | Performance | Accessibility | Best Practices | SEO | Page weight |
+|---|---|---|---|---|---|
+| Assignment 3 (mobile) | 100 | 100 | 96 | 100 | 92 KB |
+| Assignment 4 (mobile) | 99 | 100 | 96 | 100 | 127 KB |
+| Assignment 4 (desktop) | 100 | 100 | 96 | 100 | 124 KB |
+
+The page is slightly larger than in A3 because of the Arabic font weights and
+the translations file. The Best Practices point is a console message caused by
+the test machine having no access to external fonts.
 
 ## 9. Testing
 
-Tested in Chrome (desktop and a 390 px phone size) with automated browser tests
-and by hand. The GitHub API answers were simulated for the error cases.
+Automated browser tests (Chrome, desktop 1280 px and phone 390 px) plus manual
+checks. GitHub API answers were also simulated to test the error cases.
 
 | Test | Expected result |
 |---|---|
-| Category **Web** + level **Advanced** | 1 project, advanced message shown |
-| Category **Mobile** + level **Beginner** | "No beginner Mobile projects yet…", Reset button shown |
-| Sort **Title (A–Z)** | Cards in alphabetical order |
-| Search "uml" / "zzz" | 1 project / "No projects match "zzz"…" |
-| Reload after changing filters | Same category, level, and sort |
-| GitHub API works | Profile + up to 6 repositories, forks hidden |
-| GitHub returns 500 | Friendly error + Try again; Try again loads the data |
-| GitHub rate limit (403) | Rate-limit message |
-| No repositories | "No public repositories yet…" |
-| Repository name with HTML code | Shown as plain text, nothing runs |
-| Save visitor name "R2" | "Please use letters only." |
-| Save visitor name "سارة" | Greeting shows the name correctly; form is pre-filled |
-| Theme toggle, then reload | Same theme, no flash |
-| Hide **About**, then reload | About stays hidden |
-| Email "abc" | "Please enter a valid email…" |
-| Reason "Project collaboration" + link "notaurl" | Link field appears; URL error |
-| Message "short" | Send stays disabled; counter "5 / 500" |
-| All fields valid | Send enabled → "Sending…" → confirmation, form cleared |
-| Reload the page | Timer keeps counting |
-| 390 px wide screen | No horizontal scrolling, controls stack in one column |
+| Click **العربية** | `lang="ar"`, `dir="rtl"`, Arabic title, every static text translated |
+| Arabic: greeting with a saved name | "مساء الخير يا سارة! …" with the name in the right order |
+| Arabic: project cards | Arabic titles, badges, and dates ("نوفمبر 2026") |
+| Arabic: Mobile + Beginner | "لا توجد مشاريع في تصنيف «جوال» بمستوى «مبتدئ» بعد…" |
+| Search "طويق" and "UML" in Arabic | 1 project each |
+| Arabic: GitHub section | Arabic status and "آخر تحديث قبل 3 أيام" |
+| Switch language while a form error is shown | Error and hint redraw in the new language |
+| Send the form, then switch language | Confirmation redraws in the new language |
+| Reload in Arabic | Stays Arabic and right-to-left, no flash |
+| Phone width in Arabic | No horizontal scrolling |
+| Scroll past About, Projects, GitHub | Garden 3/6, message "Your flower grew!…" |
+| Switch theme and language | Garden 5/6 |
+| Open the garden, press Escape | Panel closes, focus back on the pot |
+| Send a message | Garden 6/6, bloom animation, "Your flower bloomed!…" |
+| Reload | Flower stays in bloom |
+| **Plant a new seed** | Garden back to 0/6 |
+| Each stage 0–6 | Correct flower drawing (checked with screenshots) |
+| All Assignment 3 tests (filters, form, API errors, saved state, timer) | Still pass |
 | HTML validator (`html-validate`) | No errors |
+| Browser console | No errors or warnings |
 
-## 10. Limitations
+**Browsers:** the code uses features supported by current versions of Chrome,
+Edge, Firefox, and Safari (logical CSS properties, `:is()`, the CSS `scale`
+property, `Intl.RelativeTimeFormat`, optional chaining `??`).
 
-- The contact form has no backend, so messages are not actually sent.
-- Without a GitHub token the API allows 60 requests per hour per visitor;
-  the 10-minute cache keeps the site far below this.
-- Saved settings belong to one browser; another device starts with the defaults.
+## 10. Problems Found and Fixed
+
+| Problem | Cause | Fix |
+|---|---|---|
+| Garden leaves floated away from the stem | CSS `transform-origin` also applied to the SVG `rotate()` on the same element | Each leaf in its own `<g>` for position/rotation; CSS scales only the leaf |
+| Stem was drawn on top of the flower | SVG draws elements in source order | Pot → stem → leaves → bud → petals → center |
+| Garden message covered the open panel | Both were positioned above the pot | Hide the message while the panel is open |
+| Big Arabic heading looked broken | `letter-spacing: 1px` separates joined Arabic letters | `letter-spacing: 0` when `lang="ar"` |
+| Arabic dates showed the Hijri calendar | `ar-SA` defaults to the Islamic calendar | Locale `ar-SA-u-ca-gregory-nu-latn` |
+| Lighthouse: label-content-name-mismatch | Language button's `aria-label` differed from its visible text | Visible text is the name; the explanation moved to `title` |
+| HTML validator: button without text | Garden button only got a label from JavaScript | Default `aria-label` in the HTML |
+
+## 11. Limitations and Future Work
+
+- The contact form has no backend; a service such as Formspree could send real
+  emails.
+- Repository descriptions come from GitHub and stay in English.
+- The garden is saved per browser; a different device starts with a seed.
+- Future ideas: more languages through the same `TRANSLATIONS` object, and
+  more garden plants for returning visitors.
