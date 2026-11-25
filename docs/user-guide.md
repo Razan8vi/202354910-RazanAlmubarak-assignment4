@@ -58,23 +58,17 @@ is connected).
 ## 7. Your flower (digital garden)
 
 The flower pot in the corner (bottom-left in English, bottom-right in Arabic)
-grows as you explore:
+grows as you scroll down the page. There is nothing to click.
 
-| Step | Do this |
+| Where you are | What you see |
 |---|---|
-| 1 | Scroll to **About Me** |
-| 2 | Scroll to **Projects** |
-| 3 | Scroll to **Latest on GitHub** |
-| 4 | Switch **light / dark mode** |
-| 5 | Switch the **language** |
-| 6 | **Send a message** with the contact form |
+| Top of the page | A seed in the soil |
+| Scrolling down | The stem grows, then two leaves |
+| Past the middle | A bud appears and slowly opens |
+| Bottom of the page | Full bloom, a little dance, and a thank-you message |
 
-- The small label on the pot shows your progress (for example `3/6`).
-- Click the pot to see which steps are left. Press **Escape** or click outside
-  to close it.
-- After all six steps, the flower blooms.
-- Your flower is saved, so it keeps growing on your next visit.
-  **Plant a new seed** starts again.
+- The small label on the pot shows how far down you are (for example `45%`).
+- Scroll back up and the flower gets smaller again.
 
 ## 8. Timer
 
@@ -83,6 +77,6 @@ reload the page.
 
 ## 9. Resetting everything
 
-To clear every saved choice (theme, language, name, filters, flower), open the
+To clear every saved choice (theme, language, name, filters), open the
 browser's developer tools → **Application** → **Local Storage**, and delete the
 keys that start with `portfolio.`.

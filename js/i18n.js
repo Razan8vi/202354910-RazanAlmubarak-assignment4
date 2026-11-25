@@ -157,29 +157,7 @@ const TRANSLATIONS = {
         "footer.timer": "You have been on my portfolio for",
 
         /* Digital garden */
-        "garden.button": "Your flower: {done} of {total} steps done. Open to see what is left.",
-        "garden.title": "Grow your flower",
-        "garden.intro": "Explore my portfolio and the flower grows with every step.",
-        "garden.progress": "{done} of {total} steps done",
-        "garden.close": "Close",
-        "garden.reset": "Plant a new seed",
-        "garden.grew": "Your flower grew! {done} of {total} steps done.",
-        "garden.done": "done",
-        "garden.todo": "not done yet",
-        "garden.bloomed": "Your flower bloomed! Thank you for exploring my portfolio.",
-        "garden.step.about": "Read About Me",
-        "garden.step.projects": "Look at my projects",
-        "garden.step.github": "Visit my GitHub section",
-        "garden.step.theme": "Try light or dark mode",
-        "garden.step.language": "Switch the language",
-        "garden.step.message": "Send me a message",
-        "garden.stage.0": "A seed",
-        "garden.stage.1": "A tiny sprout",
-        "garden.stage.2": "Growing taller",
-        "garden.stage.3": "Two green leaves",
-        "garden.stage.4": "A bud appears",
-        "garden.stage.5": "Almost open",
-        "garden.stage.6": "In full bloom"
+        "garden.bloomed": "Your flower bloomed! Thank you for reading all the way down."
     },
 
     ar: {
@@ -325,28 +303,6 @@ const TRANSLATIONS = {
         "footer.timer": "مدة زيارتك لموقعي",
 
         /* الحديقة الرقمية */
-        "garden.button": "وردتك: أنجزت {done} من {total} خطوات. افتحها لترى ما تبقى.",
-        "garden.title": "كبّر وردتك",
-        "garden.intro": "استكشف موقعي، وستكبر الوردة مع كل خطوة.",
-        "garden.progress": "أنجزت {done} من {total} خطوات",
-        "garden.close": "إغلاق",
-        "garden.reset": "ازرع بذرة جديدة",
-        "garden.grew": "كبرت وردتك! أنجزت {done} من {total} خطوات.",
-        "garden.done": "تم",
-        "garden.todo": "لم يتم بعد",
-        "garden.bloomed": "تفتّحت وردتك! شكرًا لاستكشافك موقعي.",
-        "garden.step.about": "اقرأ نبذة عني",
-        "garden.step.projects": "تصفّح مشاريعي",
-        "garden.step.github": "زُر قسم GitHub",
-        "garden.step.theme": "جرّب الوضع الفاتح أو الداكن",
-        "garden.step.language": "غيّر اللغة",
-        "garden.step.message": "أرسل لي رسالة",
-        "garden.stage.0": "بذرة",
-        "garden.stage.1": "نبتة صغيرة",
-        "garden.stage.2": "تكبر شيئًا فشيئًا",
-        "garden.stage.3": "ورقتان خضراوان",
-        "garden.stage.4": "ظهر برعم",
-        "garden.stage.5": "على وشك التفتّح",
-        "garden.stage.6": "متفتّحة بالكامل"
+        "garden.bloomed": "تفتّحت وردتك! شكرًا لأنك قرأت حتى النهاية."
     }
 };

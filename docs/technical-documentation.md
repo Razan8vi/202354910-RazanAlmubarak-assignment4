@@ -7,8 +7,8 @@ together everything from Assignments 1–3 and adds two new features:
 
 - **Arabic / English switch** – the whole site, including text built by
   JavaScript, changes language and direction (right-to-left for Arabic).
-- **Digital garden** – a small flower in the corner grows one stage for every
-  part of the site the visitor explores, and blooms when they have seen it all.
+- **Digital garden** – a small flower in the corner grows as the visitor
+  scrolls down the page, and blooms when they reach the bottom.
 
 The site uses plain HTML, CSS, and JavaScript, with no frameworks, libraries,
 or build step, and is deployed with GitHub Pages.
@@ -50,7 +50,7 @@ the HTML is parsed, without blocking the page from drawing.
 | 9 | GitHub API | `fetchJSON()`, `loadGitHubData()`, `getFriendlyErrorMessage()`, `prepareRepos()` |
 | 10 | Contact form | `validators`, `validateForm()`, `updateFormState()`, `handleContactSubmit()` |
 | 11 | Timer | `formatDuration()`, `initTimer()` |
-| 12 | **Digital garden** | `completeGardenStep()`, `renderGarden()`, `watchGardenSections()` |
+| 12 | **Digital garden** | `getScrollProgress()`, `growthBetween()`, `updateGarden()`, `requestGardenUpdate()` |
 | 13 | Start | Calls every `init...()` function once; `initLanguage()` runs last |
 
 ## 3. Arabic / English Switch
@@ -89,7 +89,7 @@ and then calls every registered function:
 | Projects | Cards, level message, counter, empty message, dates |
 | GitHub | Loading, error, or data view (kept in `githubView`) |
 | Contact | Reason note, field errors, the "still needed" hint, button, confirmation (kept in `lastSentMessage`) |
-| Garden | Button label, stage, progress, step list |
+| Garden | The bloom message, if it is on screen |
 
 ### Right-to-left layout
 
@@ -115,57 +115,78 @@ is the default for first-time visitors.
 
 ## 4. Digital Garden
 
-### Steps
+### Idea
 
-| Step | How it is detected |
+A flower pot sits in the corner of the screen. At the top of the page it is
+a seed. As the visitor scrolls down, the stem grows, two leaves open, a bud
+appears and opens, and at the bottom the flower is in full bloom. Scrolling
+back up makes it smaller again. Nothing needs to be clicked: the flower is a
+playful reading-progress indicator.
+
+> The first version grew with six "exploration steps" (seeing sections,
+> switching theme or language, sending a message) and had a progress panel.
+> I changed the idea so it follows the scroll position instead, which is
+> simpler for visitors and shows the growth continuously.
+
+### How the growth is calculated
+
+1. `getScrollProgress()` returns how far down the page the visitor is:
+   `scrollY / (scrollHeight − innerHeight)`, kept between 0 and 1. If the whole
+   page fits on the screen, it returns 1.
+2. Each part of the flower grows during its own part of the page
+   (`GROWTH_RANGES`):
+
+| Part | Grows between |
 |---|---|
-| `about`, `projects`, `github` | `IntersectionObserver` with `threshold: 0.35`: about a third of the section was on screen |
-| `theme` | The theme button sends a `garden:step` event |
-| `language` | The language button sends a `garden:step` event |
-| `message` | A successful contact form submission sends a `garden:step` event |
+| Stem | 0 % – 55 % |
+| First leaf | 15 % – 30 % |
+| Second leaf | 30 % – 45 % |
+| Bud | 50 % – 70 % |
+| Petals | 70 % – 95 % |
+| Yellow center | 88 % – 100 % |
 
-Features never call the garden directly; they only dispatch
-`new CustomEvent("garden:step", { detail: "theme" })`. This keeps the garden
-separate from the rest of the code.
-
-### Flow (`completeGardenStep`)
-
-1. Ignore unknown steps and steps that are already done.
-2. Add the step to the `gardenDone` set and save it (`portfolio.garden`).
-3. `renderGarden()` sets `data-stage="0"`–`"6"` on `#garden` and updates the
-   label, counter (`3/6`), progress bar, and step list.
-4. Show a short message and play a CSS animation once (`just-grew`, or
-   `just-bloomed` when all six steps are done).
+3. `growthBetween(progress, [start, end])` turns the page position into a
+   value from 0 to 1 for that part.
+4. `updateGarden()` writes each value to a CSS variable on `#garden`
+   (`--stem`, `--leaf1`, `--leaf2`, `--bud`, `--petals`, `--center`) and
+   updates the `45%` label.
+5. At 98 % the pot gets the `is-bloomed` class, plays a short "dance"
+   animation once, and shows a thank-you message (translated).
 
 ### Drawing the flower
 
 The flower is one inline SVG (pot, soil, seed, stem, two leaves, bud, petals,
-center). JavaScript only changes `data-stage`; CSS decides what each stage
-shows:
+center). JavaScript never touches the SVG; CSS reads the variables:
 
-| Stage | What appears |
-|---|---|
-| 0 | Seed in the soil |
-| 1–3 | Stem grows (`stroke-dashoffset` on a path with `pathLength="1"`), then one and two leaves (`scale`) |
-| 4 | Bud |
-| 5 | Bud with half-open petals |
-| 6 | Full bloom with a yellow center |
+```css
+.g-stem      { stroke-dashoffset: calc(1 - var(--stem, 0)); } /* path with pathLength="1" */
+.g-leaf-left { scale: var(--leaf1, 0); }
+.g-petals    { scale: var(--petals, 0); }
+.g-seed      { opacity: calc(1 - var(--stem, 0) * 5); }      /* disappears as the stem starts */
+```
 
 Each leaf sits in a `<g>` that positions and rotates it, and CSS scales the
 leaf itself. This avoids a bug found during testing: when the rotation and the
 CSS `scale` were on the same element, `transform-origin` moved the leaves away
 from the stem.
 
-### Panel and accessibility
+### Performance
 
-- The pot is a `<button>` with `aria-expanded` / `aria-controls` and a
-  translated `aria-label` ("Your flower: 3 of 6 steps done…").
-- The panel (`role="dialog"`) lists the steps; each has visually hidden
-  "(done)" / "(not done yet)" text for screen readers.
-- Escape or a click outside closes the panel and returns focus to the pot.
-- The message under the pot uses `role="status"`, so screen readers announce
-  it. It is hidden while the panel is open (the panel already shows progress).
-- With `prefers-reduced-motion`, all animations and transitions are turned off.
+- The scroll listener is `passive`, so it never delays scrolling.
+- `requestGardenUpdate()` asks for **one** `requestAnimationFrame` at a time:
+  however many scroll events fire, the flower updates at most once per frame.
+- Only CSS variables change; the browser redraws a 68 px element.
+- Short CSS transitions (0.15 s) smooth out very fast scrolling.
+- The garden also updates on `resize` and `load` (images change the page
+  height).
+
+### Accessibility
+
+- The pot is decorative (`aria-hidden="true"`) and has
+  `pointer-events: none`, so it never blocks clicks or keyboard focus.
+- The bloom message uses `role="status"`, so screen readers announce it.
+- With `prefers-reduced-motion`, the transitions and the bloom animation are
+  turned off; the flower still changes size with the page.
 - The pot sits bottom-left in English and bottom-right in Arabic, and the
   footer gets extra space on phones so the pot never covers its text.
 
@@ -201,7 +222,6 @@ step. No backend is connected.
 |---|---|---|
 | `portfolio.theme` | localStorage | Light / dark mode |
 | `portfolio.language` | localStorage | Arabic / English |
-| `portfolio.garden` | localStorage | Finished garden steps |
 | `portfolio.visitorName` | localStorage | Greeting and contact form |
 | `portfolio.visitCount` | localStorage + sessionStorage | Visit counter |
 | `portfolio.hiddenSections` | localStorage | Hide / Show buttons |
@@ -223,14 +243,13 @@ storage is blocked.
 | `localStorage` blocked | Site works; choices are just not remembered |
 | Missing translation | English text is shown and a warning is logged |
 | JavaScript turned off | Short English and Arabic `<noscript>` message |
-| Old browser without `IntersectionObserver` | GitHub loads immediately; garden counts the other steps |
+| Old browser without `IntersectionObserver` | GitHub loads immediately |
 
 ## 7. Accessibility
 
 - Semantic landmarks, one `h1`, labels on every input, errors linked with
   `aria-describedby` and announced with `aria-live`.
-- `aria-pressed` on toggles, `aria-expanded` + `aria-controls` on Hide / Show
-  and the garden button.
+- `aria-pressed` on toggles, `aria-expanded` + `aria-controls` on Hide / Show.
 - `<html lang>` changes with the language, so screen readers switch voice;
   the language button has `lang="ar"` / `lang="en"` on its own text.
 - Visible `:focus-visible` outline, contrast checked in both themes,
@@ -246,7 +265,7 @@ storage is blocked.
 | `width` / `height` on images | No layout shift |
 | `defer` on both scripts, `preconnect` to fonts and API | Faster first paint |
 | API only when the section is visible, cached 10 minutes | Fewer requests |
-| Garden animations use CSS (`transform`, `scale`, `stroke-dashoffset`) | Smooth, no JavaScript animation loop |
+| Garden: passive scroll listener + one `requestAnimationFrame` per frame, CSS variables only | Smooth scrolling, almost no work per frame |
 | Debounced search; timer skips hidden tabs | Less work |
 
 **Lighthouse** (Chrome Lighthouse 12, local server):
@@ -254,8 +273,8 @@ storage is blocked.
 | | Performance | Accessibility | Best Practices | SEO | Page weight |
 |---|---|---|---|---|---|
 | Assignment 3 (mobile) | 100 | 100 | 96 | 100 | 92 KB |
-| Assignment 4 (mobile) | 99 | 100 | 96 | 100 | 127 KB |
-| Assignment 4 (desktop) | 100 | 100 | 96 | 100 | 124 KB |
+| Assignment 4 (mobile) | 98–99 | 100 | 96 | 100 | 118 KB |
+| Assignment 4 (desktop) | 100 | 100 | 96 | 100 | 115 KB |
 
 The page is slightly larger than in A3 because of the Arabic font weights and
 the translations file. The Best Practices point is a console message caused by
@@ -278,13 +297,12 @@ checks. GitHub API answers were also simulated to test the error cases.
 | Send the form, then switch language | Confirmation redraws in the new language |
 | Reload in Arabic | Stays Arabic and right-to-left, no flash |
 | Phone width in Arabic | No horizontal scrolling |
-| Scroll past About, Projects, GitHub | Garden 3/6, message "Your flower grew!…" |
-| Switch theme and language | Garden 5/6 |
-| Open the garden, press Escape | Panel closes, focus back on the pot |
-| Send a message | Garden 6/6, bloom animation, "Your flower bloomed!…" |
-| Reload | Flower stays in bloom |
-| **Plant a new seed** | Garden back to 0/6 |
-| Each stage 0–6 | Correct flower drawing (checked with screenshots) |
+| Top of the page | Seed only, label `0%` |
+| Scroll to 20 %, 40 %, 60 %, 80 % | Stem and first leaf, then both leaves, then bud, then opening petals (checked with screenshots) |
+| Bottom of the page | Full bloom, label `100%`, dance animation, "Your flower bloomed!…" |
+| Scroll back to the top | Flower shrinks back to a seed |
+| Switch to Arabic at the bottom | Message translated, pot moves to the bottom-right |
+| Click where the pot is | The click reaches the page (`pointer-events: none`) |
 | All Assignment 3 tests (filters, form, API errors, saved state, timer) | Still pass |
 | HTML validator (`html-validate`) | No errors |
 | Browser console | No errors or warnings |
@@ -299,17 +317,15 @@ property, `Intl.RelativeTimeFormat`, optional chaining `??`).
 |---|---|---|
 | Garden leaves floated away from the stem | CSS `transform-origin` also applied to the SVG `rotate()` on the same element | Each leaf in its own `<g>` for position/rotation; CSS scales only the leaf |
 | Stem was drawn on top of the flower | SVG draws elements in source order | Pot → stem → leaves → bud → petals → center |
-| Garden message covered the open panel | Both were positioned above the pot | Hide the message while the panel is open |
+| Visitors had to do tasks to grow the flower | First design used six exploration steps and a panel | Redesigned: the flower follows the scroll position |
 | Big Arabic heading looked broken | `letter-spacing: 1px` separates joined Arabic letters | `letter-spacing: 0` when `lang="ar"` |
 | Arabic dates showed the Hijri calendar | `ar-SA` defaults to the Islamic calendar | Locale `ar-SA-u-ca-gregory-nu-latn` |
 | Lighthouse: label-content-name-mismatch | Language button's `aria-label` differed from its visible text | Visible text is the name; the explanation moved to `title` |
-| HTML validator: button without text | Garden button only got a label from JavaScript | Default `aria-label` in the HTML |
 
 ## 11. Limitations and Future Work
 
 - The contact form has no backend; a service such as Formspree could send real
   emails.
 - Repository descriptions come from GitHub and stay in English.
-- The garden is saved per browser; a different device starts with a seed.
 - Future ideas: more languages through the same `TRANSLATIONS` object, and
-  more garden plants for returning visitors.
+  different plants or seasons for returning visitors.

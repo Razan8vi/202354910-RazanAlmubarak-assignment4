@@ -12,7 +12,7 @@
 |---|---|---|---|---|---|
 | C01 | Claude (Opus 5.5) | 2026-11-25 | One conversation for the whole assignment: requirements, feature ideas, code, testing, Git help, documentation, and presentation | All files listed in A01–A06 | I chose the features myself (from a list of ideas, I picked the Arabic / English switch and the digital garden and dropped the others), created and pushed the repository, enabled GitHub Pages, and asked Claude to explain the parts I did not understand. |
 | A01 | Claude (Opus 5.5) | 2026-11-25 | Arabic / English switch: translations file, `t()` helper, right-to-left layout, Arabic font, redrawing every feature in the chosen language | `js/i18n.js`, `js/script.js`, `index.html`, `css/styles.css` | I read all the Arabic texts and corrected the wording where needed, switched the language in every section, and checked the right-to-left layout on my laptop and phone. |
-| A02 | Claude (Opus 5.5) | 2026-11-25 | Digital garden: SVG flower with 7 stages, step detection, progress panel, saved progress | `index.html`, `css/styles.css`, `js/script.js`, `js/i18n.js` | I explored the site to grow the flower to full bloom, opened and closed the panel, reloaded to check it was saved, and used **Plant a new seed**. |
+| A02 | Claude (Opus 5.5) | 2026-11-25 | Digital garden: SVG flower. The first version grew with six exploration steps and had a progress panel; I decided it should grow with scrolling instead, so Claude changed it to follow the scroll position | `index.html`, `css/styles.css`, `js/script.js`, `js/i18n.js` | I changed the idea myself (no clicks, the flower grows as you scroll down), then scrolled up and down on my laptop and phone to check that it grows, shrinks, and blooms at the bottom. |
 | A03 | Claude (Opus 5.5) | 2026-11-25 | Automated browser tests, bug fixes (leaf position, drawing order, toast over the panel), no-JavaScript message, accessibility fix for the language button | `css/styles.css`, `js/script.js`, `index.html` | I read each fix in section 10 of the technical documentation to understand the cause. The Lighthouse scores in the documentation were measured by Claude during testing. |
 | A04 | Claude (Opus 5.5) | 2026-11-25 | First drafts of the README, the technical documentation, the user guide, and this report | `README.md`, `docs/` | I read the drafts, checked that they match what the site does, and edited the wording. |
 | A05 | Claude (Opus 5.5) | 2026-11-25 | Presentation slides | `presentation/slides.pdf` | I reviewed every slide and adjusted the content to how I want to present. |
@@ -25,6 +25,7 @@ my Assignment 3 files.
 - Add Arabic / English language switch with right-to-left layout
 - Add a digital garden: a flower that grows while visitors explore
 - Add a no-JavaScript message and fix the language button label
+- Make the flower grow with scrolling instead of steps
 - Write the Assignment 4 documentation and user guide
 - Add the presentation slides
 
@@ -56,11 +57,11 @@ my Assignment 3 files.
   (`inset-inline-start`, `border-inline-start`)
 - Unicode isolate marks for mixed Arabic / English text, and `Intl` locales for
   dates (Gregorian calendar, Latin digits)
-- `IntersectionObserver` to detect what the visitor has seen
-- Custom events (`garden:step`) to keep features independent from each other
-- SVG drawing and CSS-driven animation (`stroke-dashoffset`, `scale`,
+- Measuring scroll progress and updating at most once per frame with
+  `requestAnimationFrame` and a passive scroll listener
+- Passing values from JavaScript to CSS with custom properties (`--stem`, `--bud`)
+- SVG drawing and CSS-driven sizing (`stroke-dashoffset`, `scale`,
   `transform-box`), and respecting `prefers-reduced-motion`
-- Accessible dialogs: `aria-expanded`, focus return, Escape to close
 
 ## 5. Responsible Use & Modifications
 
@@ -69,7 +70,7 @@ I did not submit code I cannot explain. I reviewed `js/i18n.js`,
 the Arabic texts and my project details, and tested every feature in my own
 browser, including the live GitHub API. The design (colors, fonts, layout) is
 my own from earlier assignments. No personal data is sent anywhere: the
-visitor's name, choices, and flower stay in their own browser.
+visitor's name and choices stay in their own browser.
 
 The complete, unedited Claude conversation (`conversations/`) and the original
 AI outputs before my edits (`artifacts/`) are included in

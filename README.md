@@ -11,8 +11,9 @@ Assignments 1–3 and adds two features that make it feel like my own:
 - 🇸🇦 **Arabic / English** – one button switches the whole site to Arabic,
   with a right-to-left layout, Arabic font, and translated messages, dates,
   and errors.
-- 🌷 **Digital garden** – a small flower pot in the corner grows one stage for
-  every part of the site you explore, and blooms when you have seen it all.
+- 🌷 **Digital garden** – a small flower pot in the corner grows as you scroll
+  down the page: a seed at the top, leaves and a bud on the way, and a full
+  bloom when you reach the bottom.
 
 Built with plain HTML, CSS, and JavaScript: no frameworks, no libraries, no
 build step.
@@ -22,7 +23,7 @@ build step.
 | Area | Feature |
 |---|---|
 | **Language** | English / Arabic switch, right-to-left layout, every text translated (including errors, dates, and GitHub data labels), choice remembered and applied before the page is drawn |
-| **Digital garden** | Flower with 7 stages (seed → full bloom), 6 exploration steps detected with `IntersectionObserver` and custom events, progress panel, bloom animation, saved between visits |
+| **Digital garden** | SVG flower that grows with the scroll position (seed → stem → leaves → bud → full bloom), shrinks when you scroll back up, shows how far down you are (%), and blooms with a short message at the bottom |
 | **GitHub API** | My latest repositories loaded live from the GitHub REST API, with loading, error, retry, and empty states, and a 10-minute cache |
 | **Projects** | Filter by category and level, search in both languages, sort by date or title, choices remembered |
 | **Contact form** | Step-by-step validation, reason field with an optional project link, character counter, Send button enabled only when everything is valid |
@@ -48,7 +49,7 @@ This is a static site, so it needs no installation.
 
 See the [user guide](docs/user-guide.md) for every feature, step by step.
 In short: switch language and theme in the top bar, filter the projects, send
-a message, and watch the flower in the corner grow.
+a message, and watch the flower in the corner grow as you scroll down.
 
 ## Project Structure
 
@@ -77,7 +78,7 @@ a message, and watch the flower in the corner grow.
 
 | | Performance | Accessibility | Best Practices | SEO |
 |---|---|---|---|---|
-| Mobile | 99 | 100 | 96 | 100 |
+| Mobile | 98–99 | 100 | 96 | 100 |
 | Desktop | 100 | 100 | 96 | 100 |
 
 Details in [`docs/technical-documentation.md`](docs/technical-documentation.md#8-performance).
