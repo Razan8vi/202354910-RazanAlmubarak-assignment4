@@ -16,7 +16,8 @@
    9. GitHub repositories (external API)
    10. Contact form validation
    11. Time-on-site timer
-   12. Start the app
+   12. Digital garden (a flower that grows while you explore)
+   13. Start the app
    ========================================================= */
 
 "use strict";
@@ -36,7 +37,8 @@ const STORAGE_KEYS = {
     projectFilters: "portfolio.projectFilters",
     githubCache: "portfolio.githubCache",
     sessionStart: "portfolio.sessionStart",
-    language: "portfolio.language"
+    language: "portfolio.language",
+    garden: "portfolio.garden"
 };
 
 /* =========================================================
@@ -1157,7 +1159,163 @@ function initTimer() {
 }
 
 /* =========================================================
-   12. START THE APP
+   12. DIGITAL GARDEN
+   A flower in a small pot grows one stage for every step the
+   visitor explores. Steps come from two places:
+   - an IntersectionObserver notices when a section is on screen
+   - other features send a "garden:step" event (theme, language,
+     contact form)
+   The finished steps are saved, so the flower keeps growing over
+   several visits. JavaScript only sets data-stage="0"–"6"; the CSS
+   draws each stage.
+   ========================================================= */
+const GARDEN_STEPS = ["about", "projects", "github", "theme", "language", "message"];
+const GARDEN_SECTIONS = ["about", "projects", "github"];
+const GARDEN_TOAST_MS = 3500;
+
+const garden = document.getElementById("garden");
+const gardenButton = document.getElementById("garden-button");
+const gardenPanel = document.getElementById("garden-panel");
+const gardenClose = document.getElementById("garden-close");
+const gardenReset = document.getElementById("garden-reset");
+const gardenStage = document.getElementById("garden-stage");
+const gardenProgress = document.getElementById("garden-progress");
+const gardenProgressFill = document.getElementById("garden-progress-fill");
+const gardenStepsList = document.getElementById("garden-steps");
+const gardenCount = document.getElementById("garden-count");
+const gardenToast = document.getElementById("garden-toast");
+
+// Only keep saved steps that still exist
+const gardenDone = new Set(
+    readStorage(localStorage, STORAGE_KEYS.garden, []).filter((step) => GARDEN_STEPS.includes(step))
+);
+let gardenToastTimer;
+
+function renderGarden() {
+    const done = gardenDone.size;
+    const total = GARDEN_STEPS.length;
+
+    garden.dataset.stage = String(done);
+    gardenButton.classList.toggle("is-bloomed", done === total);
+    gardenButton.setAttribute("aria-label", t("garden.button", { done, total }));
+    gardenCount.textContent = `${done}/${total}`;
+    gardenStage.textContent = t(`garden.stage.${done}`);
+    gardenProgress.textContent = t("garden.progress", { done, total });
+    gardenProgressFill.style.width = `${(done / total) * 100}%`;
+
+    gardenStepsList.innerHTML = GARDEN_STEPS.map((step) => {
+        const isDone = gardenDone.has(step);
+        return `
+            <li class="${isDone ? "is-done" : ""}">
+                <span class="garden-check" aria-hidden="true">${isDone ? "✓" : ""}</span>
+                ${t(`garden.step.${step}`)}
+                <span class="visually-hidden">(${isDone ? t("garden.done") : t("garden.todo")})</span>
+            </li>`;
+    }).join("");
+}
+
+function showGardenToast(message) {
+    gardenToast.textContent = message;
+    gardenToast.classList.add("is-visible");
+
+    clearTimeout(gardenToastTimer);
+    gardenToastTimer = setTimeout(() => gardenToast.classList.remove("is-visible"), GARDEN_TOAST_MS);
+}
+
+// Play a CSS animation class once (used for the "grow" and "bloom" effects)
+function playOnce(element, className) {
+    element.classList.remove(className);
+    void element.offsetWidth; // restart the animation if it is already running
+    element.classList.add(className);
+    element.addEventListener("animationend", () => element.classList.remove(className), { once: true });
+}
+
+function completeGardenStep(step) {
+    if (!GARDEN_STEPS.includes(step) || gardenDone.has(step)) {
+        return; // unknown step, or already counted
+    }
+
+    gardenDone.add(step);
+    writeStorage(localStorage, STORAGE_KEYS.garden, [...gardenDone]);
+    renderGarden();
+
+    const done = gardenDone.size;
+    const total = GARDEN_STEPS.length;
+
+    if (done === total) {
+        playOnce(gardenButton, "just-bloomed");
+        showGardenToast(t("garden.bloomed"));
+    } else {
+        playOnce(gardenButton, "just-grew");
+        showGardenToast(t("garden.grew", { done, total }));
+    }
+}
+
+function setGardenPanel(isOpen) {
+    gardenPanel.hidden = !isOpen;
+    gardenButton.setAttribute("aria-expanded", String(isOpen));
+
+    if (isOpen) {
+        gardenClose.focus();
+    }
+}
+
+function watchGardenSections() {
+    if (!("IntersectionObserver" in window)) {
+        return; // older browsers: the other steps still work
+    }
+
+    // A section counts once about a third of it has been on screen
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                completeGardenStep(entry.target.id);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.35 });
+
+    GARDEN_SECTIONS
+        .filter((id) => !gardenDone.has(id))
+        .forEach((id) => observer.observe(document.getElementById(id)));
+}
+
+function initGarden() {
+    document.addEventListener("garden:step", (event) => completeGardenStep(event.detail));
+
+    gardenButton.addEventListener("click", () => setGardenPanel(gardenPanel.hidden));
+    gardenClose.addEventListener("click", () => {
+        setGardenPanel(false);
+        gardenButton.focus();
+    });
+
+    gardenReset.addEventListener("click", () => {
+        gardenDone.clear();
+        removeStorage(localStorage, STORAGE_KEYS.garden);
+        renderGarden();
+        watchGardenSections();
+    });
+
+    // Close with Escape, or by clicking anywhere outside the garden
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !gardenPanel.hidden) {
+            setGardenPanel(false);
+            gardenButton.focus();
+        }
+    });
+    document.addEventListener("click", (event) => {
+        if (!gardenPanel.hidden && !garden.contains(event.target)) {
+            setGardenPanel(false);
+        }
+    });
+
+    onLanguageChange(renderGarden);
+    renderGarden();
+    watchGardenSections();
+}
+
+/* =========================================================
+   13. START THE APP
    The script is loaded with "defer", so the HTML is ready here.
    initLanguage() runs last, so every part has registered its
    onLanguageChange() function before the first translation.
@@ -1169,4 +1327,5 @@ initProjects();
 initGitHub();
 initContactForm();
 initTimer();
+initGarden();
 initLanguage();

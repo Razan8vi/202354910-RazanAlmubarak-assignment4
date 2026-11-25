@@ -313,6 +313,56 @@
 
     </main>
 
+    <!-- Digital garden: a flower that grows one stage for every step
+         the visitor explores (built and saved by JavaScript) -->
+    <div id="garden" class="garden" data-stage="0">
+        <div id="garden-panel" class="garden-panel" role="dialog" aria-labelledby="garden-title" hidden>
+            <div class="garden-panel-header">
+                <h2 id="garden-title" data-i18n="garden.title">Grow your flower</h2>
+                <button
+                    id="garden-close"
+                    class="garden-close"
+                    type="button"
+                    data-i18n-aria-label="garden.close"
+                    aria-label="Close"
+                >&times;</button>
+            </div>
+            <p class="garden-intro" data-i18n="garden.intro">Explore my portfolio and the flower grows with every step.</p>
+            <p id="garden-stage" class="garden-stage"></p>
+            <div class="garden-progress-bar" aria-hidden="true"><span id="garden-progress-fill"></span></div>
+            <p id="garden-progress" class="garden-progress"></p>
+            <ul id="garden-steps" class="garden-steps"></ul>
+            <button id="garden-reset" class="link-button" type="button" data-i18n="garden.reset">Plant a new seed</button>
+        </div>
+
+        <button id="garden-button" class="garden-button" type="button" aria-expanded="false" aria-controls="garden-panel" aria-label="Your flower">
+            <svg class="garden-flower" viewBox="0 0 100 120" aria-hidden="true" focusable="false">
+                <!-- Pot and soil -->
+                <path class="g-pot" d="M22 88 H78 L72 116 H28 Z"/>
+                <ellipse class="g-soil" cx="50" cy="88" rx="26" ry="5"/>
+                <circle class="g-seed" cx="50" cy="86" r="4"/>
+                <!-- Stem and leaves (each leaf is moved by its group, then scaled by CSS) -->
+                <path class="g-stem" d="M50 86 V32" pathLength="1"/>
+                <g transform="translate(41 68) rotate(-35)"><ellipse class="g-leaf g-leaf-left" rx="10" ry="4.5"/></g>
+                <g transform="translate(59 56) rotate(35)"><ellipse class="g-leaf g-leaf-right" rx="10" ry="4.5"/></g>
+                <!-- Bud, petals and center (shown in the last stages) -->
+                <circle class="g-bud" cx="50" cy="30" r="8"/>
+                <g class="g-petals">
+                    <ellipse cx="50" cy="17" rx="8" ry="13"/>
+                    <ellipse cx="50" cy="17" rx="8" ry="13" transform="rotate(60 50 30)"/>
+                    <ellipse cx="50" cy="17" rx="8" ry="13" transform="rotate(120 50 30)"/>
+                    <ellipse cx="50" cy="17" rx="8" ry="13" transform="rotate(180 50 30)"/>
+                    <ellipse cx="50" cy="17" rx="8" ry="13" transform="rotate(240 50 30)"/>
+                    <ellipse cx="50" cy="17" rx="8" ry="13" transform="rotate(300 50 30)"/>
+                </g>
+                <circle class="g-center" cx="50" cy="30" r="6"/>
+            </svg>
+            <span id="garden-count" class="garden-count" aria-hidden="true">0/6</span>
+        </button>
+
+        <p id="garden-toast" class="garden-toast" role="status" aria-live="polite"></p>
+    </div>
+
     <footer class="site-footer">
         <p data-i18n="footer.copy">&copy; Razan Almubarak. Built for SWE 363 &ndash; Assignment 4.</p>
         <!-- Updated every second by JavaScript -->
