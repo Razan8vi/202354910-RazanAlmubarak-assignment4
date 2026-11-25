@@ -1,18 +1,22 @@
 /* =========================================================
-   Razan Almubarak – Portfolio script (Assignment 3)
+   Razan Almubarak – Portfolio script (Assignment 4)
+
+   The text for both languages lives in js/i18n.js (TRANSLATIONS),
+   which is loaded before this file.
 
    Contents
    1. Settings and storage keys
    2. Storage helpers (localStorage / sessionStorage)
    3. Small utilities
-   4. Theme (light / dark mode)
-   5. Visitor name and greeting
-   6. Show / hide sections
-   7. Projects: filter, level and sort
-   8. GitHub repositories (external API)
-   9. Contact form validation
-   10. Time-on-site timer
-   11. Start the app
+   4. Language (Arabic / English)
+   5. Theme (light / dark mode)
+   6. Visitor name and greeting
+   7. Show / hide sections
+   8. Projects: filter, level and sort
+   9. GitHub repositories (external API)
+   10. Contact form validation
+   11. Time-on-site timer
+   12. Start the app
    ========================================================= */
 
 "use strict";
@@ -31,7 +35,8 @@ const STORAGE_KEYS = {
     hiddenSections: "portfolio.hiddenSections",
     projectFilters: "portfolio.projectFilters",
     githubCache: "portfolio.githubCache",
-    sessionStart: "portfolio.sessionStart"
+    sessionStart: "portfolio.sessionStart",
+    language: "portfolio.language"
 };
 
 /* =========================================================
@@ -90,7 +95,86 @@ function debounce(callback, delay) {
 }
 
 /* =========================================================
-   4. THEME (LIGHT / DARK MODE)
+   4. LANGUAGE (ARABIC / ENGLISH)
+   - t(key, values) returns the text for the current language.
+   - Static text in index.html is marked with data-i18n,
+     data-i18n-placeholder and data-i18n-aria-label.
+   - Text built by JavaScript is redrawn by the functions that
+     register themselves with onLanguageChange().
+   - Arabic switches the page to right-to-left (dir="rtl").
+   ========================================================= */
+const SUPPORTED_LANGUAGES = ["en", "ar"];
+const languageToggle = document.getElementById("language-toggle");
+const languageListeners = [];
+
+// The <head> script already set <html lang> from the saved choice
+let currentLanguage = SUPPORTED_LANGUAGES.includes(document.documentElement.lang)
+    ? document.documentElement.lang
+    : "en";
+
+// Look up a translation and fill in {placeholders}
+function t(key, values = {}) {
+    const entry = TRANSLATIONS[currentLanguage][key] ?? TRANSLATIONS.en[key];
+
+    if (entry === undefined) {
+        console.warn(`Missing translation: ${key}`);
+        return key;
+    }
+    if (typeof entry === "function") {
+        return entry(values);
+    }
+    return entry.replace(/\{(\w+)\}/g, (match, name) => (name in values ? values[name] : match));
+}
+
+// Locale for dates and numbers: Gregorian calendar and Latin digits in Arabic too
+function getLocale() {
+    return currentLanguage === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "en-US";
+}
+
+// Register a function that redraws its text when the language changes
+function onLanguageChange(callback) {
+    languageListeners.push(callback);
+}
+
+// Fill every element marked with data-i18n* attributes
+function translateStaticText() {
+    document.querySelectorAll("[data-i18n]").forEach((element) => {
+        element.textContent = t(element.dataset.i18n);
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+        element.placeholder = t(element.dataset.i18nPlaceholder);
+    });
+    document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+        element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel));
+    });
+    document.title = t("page.title");
+}
+
+function applyLanguage(language) {
+    currentLanguage = language;
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+
+    // The button is written in the language it switches TO
+    languageToggle.lang = language === "ar" ? "en" : "ar";
+
+    translateStaticText();
+    languageListeners.forEach((callback) => callback());
+}
+
+function initLanguage() {
+    applyLanguage(currentLanguage);
+
+    languageToggle.addEventListener("click", () => {
+        const next = currentLanguage === "en" ? "ar" : "en";
+        applyLanguage(next);
+        writeStorage(localStorage, STORAGE_KEYS.language, next);
+        document.dispatchEvent(new CustomEvent("garden:step", { detail: "language" }));
+    });
+}
+
+/* =========================================================
+   5. THEME (LIGHT / DARK MODE)
    A small script in <head> applies the saved theme before the
    page is drawn. This part keeps the button in sync and saves
    every change.
@@ -102,7 +186,7 @@ function applyTheme(theme) {
 
     // The button shows the theme you will switch TO
     const isDark = theme === "dark";
-    themeToggle.textContent = isDark ? "☀ Light mode" : "☾ Dark mode";
+    themeToggle.textContent = isDark ? t("theme.toLight") : t("theme.toDark");
     themeToggle.setAttribute("aria-pressed", String(!isDark));
 }
 
@@ -114,11 +198,14 @@ function initTheme() {
         const next = current === "dark" ? "light" : "dark";
         applyTheme(next);
         writeStorage(localStorage, STORAGE_KEYS.theme, next);
+        document.dispatchEvent(new CustomEvent("garden:step", { detail: "theme" }));
     });
+
+    onLanguageChange(() => applyTheme(document.documentElement.dataset.theme));
 }
 
 /* =========================================================
-   5. VISITOR NAME AND GREETING
+   6. VISITOR NAME AND GREETING
    The greeting combines three things: the time of day
    (from Assignment 1), the saved visitor name, and how many
    times this browser has visited the site.
@@ -142,23 +229,23 @@ function getTimeOfDay() {
     const hour = new Date().getHours();
 
     if (hour < 12) {
-        return "Good morning";
+        return t("greeting.morning");
     } else if (hour < 18) {
-        return "Good afternoon";
+        return t("greeting.afternoon");
     }
-    return "Good evening";
+    return t("greeting.evening");
 }
 
-// Returns an error message, or an empty string when the name is fine
+// Returns the translation key of the error, or "" when the name is fine
 function validateVisitorName(name) {
     if (name === "") {
-        return "Please type a name first.";
+        return "visitor.errorEmpty";
     }
     if (name.length < 2 || name.length > 30) {
-        return "Your name should be 2 to 30 characters.";
+        return "visitor.errorLength";
     }
     if (!NAME_PATTERN.test(name)) {
-        return "Please use letters only.";
+        return "visitor.errorLetters";
     }
     return "";
 }
@@ -182,15 +269,15 @@ function renderGreeting() {
     const { visits } = visitorState;
     const timeOfDay = getTimeOfDay();
 
-    // Isolate the name so Arabic (right-to-left) names display correctly in English text
+    // Isolate the name so it displays correctly in both text directions
     const name = visitorState.name ? `\u2068${visitorState.name}\u2069` : "";
 
     if (name && visits > 1) {
-        greetingElement.textContent = `${timeOfDay}, ${name}! Welcome back. This is visit number ${visits}.`;
+        greetingElement.textContent = t("greeting.returning", { time: timeOfDay, name, visits });
     } else if (name) {
-        greetingElement.textContent = `${timeOfDay}, ${name}! Thanks for visiting my portfolio.`;
+        greetingElement.textContent = t("greeting.named", { time: timeOfDay, name });
     } else {
-        greetingElement.textContent = `${timeOfDay}! Thanks for visiting my portfolio.`;
+        greetingElement.textContent = t("greeting.anonymous", { time: timeOfDay });
     }
 
     // Show the form only when no name is saved
@@ -206,14 +293,16 @@ function initVisitor() {
         event.preventDefault();
 
         const name = visitorInput.value.trim();
-        const errorText = validateVisitorName(name);
+        const errorKey = validateVisitorName(name);
 
-        if (errorText) {
-            visitorError.textContent = errorText;
+        if (errorKey) {
+            visitorError.dataset.errorKey = errorKey;
+            visitorError.textContent = t(errorKey);
             visitorInput.classList.add("input-error");
             return;
         }
 
+        delete visitorError.dataset.errorKey;
         visitorError.textContent = "";
         visitorInput.classList.remove("input-error");
         visitorState.name = name;
@@ -229,10 +318,16 @@ function initVisitor() {
         renderGreeting();
         visitorInput.focus();
     });
+
+    onLanguageChange(() => {
+        renderGreeting();
+        const { errorKey } = visitorError.dataset;
+        visitorError.textContent = errorKey ? t(errorKey) : "";
+    });
 }
 
 /* =========================================================
-   6. SHOW / HIDE SECTIONS
+   7. SHOW / HIDE SECTIONS
    Every button with data-toggle-section="<id>" hides or shows
    the body of that section. The list of hidden sections is
    saved, so the page looks the same on the next visit.
@@ -241,12 +336,13 @@ const sectionToggleButtons = document.querySelectorAll("[data-toggle-section]");
 
 function setSectionVisibility(button, isVisible) {
     const body = document.getElementById(button.getAttribute("aria-controls"));
-    const sectionName = button.dataset.label;
+    const sectionName = t(button.dataset.labelKey);
+    const action = isVisible ? t("section.hide") : t("section.show");
 
     body.hidden = !isVisible;
     button.setAttribute("aria-expanded", String(isVisible));
-    button.textContent = isVisible ? "Hide" : "Show";
-    button.setAttribute("aria-label", `${isVisible ? "Hide" : "Show"} ${sectionName}`);
+    button.textContent = action;
+    button.setAttribute("aria-label", t("section.toggleLabel", { action, section: sectionName }));
 }
 
 function initSectionToggles() {
@@ -268,83 +364,111 @@ function initSectionToggles() {
             writeStorage(localStorage, STORAGE_KEYS.hiddenSections, [...hiddenSections]);
         });
     });
+
+    onLanguageChange(() => {
+        sectionToggleButtons.forEach((button) => {
+            setSectionVisibility(button, button.getAttribute("aria-expanded") === "true");
+        });
+    });
 }
 
 /* =========================================================
-   7. PROJECTS: FILTER, LEVEL AND SORT
+   8. PROJECTS: FILTER, LEVEL AND SORT
    The projects are stored as data and drawn by JavaScript.
+   Every text field has an English and an Arabic version.
    Every change runs the same pipeline:
    category filter -> level filter -> search -> sort -> render
    ========================================================= */
 const PROJECTS = [
     {
-        title: "BYTO – Book Your Truck Online",
-        description: "A front-end project from my training at Tuwaiq Academy: a truck-booking app that supports Arabic and English. It gave me more experience in building structured screens and applying core development concepts to a practical use case.",
+        title: { en: "BYTO – Book Your Truck Online", ar: "BYTO – احجز شاحنتك أونلاين" },
+        description: {
+            en: "A front-end project from my training at Tuwaiq Academy: a truck-booking app that supports Arabic and English. It gave me more experience in building structured screens and applying core development concepts to a practical use case.",
+            ar: "مشروع واجهات أمامية من تدريبي في أكاديمية طويق: تطبيق لحجز الشاحنات يدعم العربية والإنجليزية. أكسبني خبرة أكبر في بناء شاشات منظمة وتطبيق مفاهيم التطوير الأساسية على حالة استخدام عملية."
+        },
         category: "mobile",
         level: "intermediate",
         date: "2025-08",
-        tags: ["Front-end", "Arabic / English", "Tuwaiq Academy"],
-        image: { src: "assets/images/byto-app.webp", small: "assets/images/byto-app-400.webp", alt: "BYTO app language selection screen", width: 640, height: 480 }
+        tags: { en: ["Front-end", "Arabic / English", "Tuwaiq Academy"], ar: ["واجهات أمامية", "عربي / إنجليزي", "أكاديمية طويق"] },
+        image: {
+            src: "assets/images/byto-app.webp",
+            small: "assets/images/byto-app-400.webp",
+            alt: { en: "BYTO app language selection screen", ar: "شاشة اختيار اللغة في تطبيق BYTO" },
+            width: 640,
+            height: 480
+        }
     },
     {
-        title: "Personal Portfolio Website",
-        description: "My first portfolio website (Assignment 1), built with HTML, CSS, and JavaScript. It includes an About Me section, project cards, a contact form, and a time-of-day greeting.",
+        title: { en: "Personal Portfolio Website", ar: "موقع البورتفوليو الشخصي" },
+        description: {
+            en: "My first portfolio website (Assignment 1), built with HTML, CSS, and JavaScript. It includes an About Me section, project cards, a contact form, and a time-of-day greeting.",
+            ar: "أول موقع بورتفوليو لي (الواجب 1)، مبني بـ HTML وCSS وJavaScript. يحتوي على نبذة عني، وبطاقات للمشاريع، ونموذج تواصل، وتحية حسب وقت اليوم."
+        },
         category: "web",
         level: "beginner",
         date: "2026-09",
-        tags: ["HTML", "CSS", "JavaScript"],
-        image: { src: "assets/images/portfolio-a1.webp", small: "assets/images/portfolio-a1-400.webp", alt: "Screenshot of my Assignment 1 portfolio website", width: 800, height: 450 },
+        tags: { en: ["HTML", "CSS", "JavaScript"], ar: ["HTML", "CSS", "JavaScript"] },
+        image: {
+            src: "assets/images/portfolio-a1.webp",
+            small: "assets/images/portfolio-a1-400.webp",
+            alt: { en: "Screenshot of my Assignment 1 portfolio website", ar: "صورة من موقع البورتفوليو في الواجب 1" },
+            width: 800,
+            height: 450
+        },
         link: "https://github.com/Razan8vi/202354910-razan-almubarak-assignment1"
     },
     {
-        title: "Interactive Portfolio",
-        description: "Assignment 2 made the portfolio interactive: a live project search, contact form validation with clear error messages, and animated feedback.",
+        title: { en: "Interactive Portfolio", ar: "البورتفوليو التفاعلي" },
+        description: {
+            en: "Assignment 2 made the portfolio interactive: a live project search, contact form validation with clear error messages, and animated feedback.",
+            ar: "في الواجب 2 أصبح الموقع تفاعليًا: بحث مباشر في المشاريع، وتحقق من نموذج التواصل مع رسائل خطأ واضحة، وتأثيرات حركية للتنبيهات."
+        },
         category: "web",
         level: "intermediate",
         date: "2026-10",
-        tags: ["DOM events", "Form validation", "CSS animation"],
+        tags: { en: ["DOM events", "Form validation", "CSS animation"], ar: ["أحداث DOM", "التحقق من النماذج", "حركات CSS"] },
         link: "https://github.com/Razan8vi/202354910-RazanAlmubarak-assignment2"
     },
     {
-        title: "Advanced Portfolio (this site)",
-        description: "Assignment 3 connects the portfolio to the GitHub REST API and adds project filtering and sorting, a saved light/dark theme, a remembered visitor name, and a time-on-site timer.",
+        title: { en: "Personal Web Application (this site)", ar: "تطبيق الويب الشخصي (هذا الموقع)" },
+        description: {
+            en: "Assignment 4, the final version: an Arabic / English switch with a right-to-left layout, and a flower that grows while you explore the site, on top of everything from Assignments 1–3.",
+            ar: "الواجب 4، النسخة النهائية: تبديل بين العربية والإنجليزية مع تخطيط من اليمين لليسار، ووردة تكبر كلما استكشفت الموقع، فوق كل ما بنيته في الواجبات 1–3."
+        },
         category: "web",
         level: "advanced",
         date: "2026-11",
-        tags: ["REST API", "async / await", "localStorage"],
+        tags: { en: ["Arabic / English", "RTL layout", "SVG animation"], ar: ["عربي / إنجليزي", "تخطيط RTL", "حركة SVG"] },
+        link: "https://github.com/Razan8vi/202354910-RazanAlmubarak-assignment4"
+    },
+    {
+        title: { en: "Advanced Portfolio", ar: "البورتفوليو المتقدم" },
+        description: {
+            en: "Assignment 3 connected the portfolio to the GitHub REST API and added project filtering and sorting, a saved light/dark theme, a remembered visitor name, and a time-on-site timer.",
+            ar: "في الواجب 3 ربطت الموقع بواجهة GitHub البرمجية، وأضفت فلترة المشاريع وترتيبها، وحفظ الوضع الفاتح والداكن، وتذكّر اسم الزائر، ومؤقتًا لمدة الزيارة."
+        },
+        category: "web",
+        level: "advanced",
+        date: "2026-11",
+        tags: { en: ["REST API", "async / await", "localStorage"], ar: ["REST API", "async / await", "localStorage"] },
         link: "https://github.com/Razan8vi/202354910-RazanAlmubarak-assignment3"
     },
     {
-        title: "KFUPM PeerLearn",
-        description: "A team software engineering project for a peer-tutoring platform for KFUPM students. We gathered and analyzed the requirements, then modeled them with UML use case diagrams and low-fidelity GUI mockups.",
+        title: { en: "KFUPM PeerLearn", ar: "منصة KFUPM PeerLearn" },
+        description: {
+            en: "A team software engineering project for a peer-tutoring platform for KFUPM students. We gathered and analyzed the requirements, then modeled them with UML use case diagrams and low-fidelity GUI mockups.",
+            ar: "مشروع هندسة برمجيات جماعي لمنصة تعليم بين الأقران لطلاب جامعة الملك فهد للبترول والمعادن. جمعنا المتطلبات وحللناها، ثم نمذجناها بمخططات حالات الاستخدام UML ونماذج أولية للواجهات."
+        },
         category: "software-engineering",
         level: "advanced",
         date: "2026-04",
-        tags: ["Requirements", "UML", "Team project"]
+        tags: { en: ["Requirements", "UML", "Team project"], ar: ["المتطلبات", "UML", "مشروع جماعي"] }
     }
 ];
 
-const CATEGORY_LABELS = {
-    all: "All",
-    web: "Web",
-    mobile: "Mobile",
-    "software-engineering": "Software Engineering"
-};
-
-const LEVEL_LABELS = {
-    beginner: "Beginner",
-    intermediate: "Intermediate",
-    advanced: "Advanced"
-};
-
-// A different message for each level the visitor chooses
-const LEVEL_MESSAGES = {
-    all: "Pick a level to see projects that match what you are looking for.",
-    beginner: "Beginner projects: my first steps with HTML, CSS, and JavaScript.",
-    intermediate: "Intermediate projects: interactive features, validation, and real use cases.",
-    advanced: "Advanced projects: APIs, saved state, and team-based software engineering."
-};
-
+const CATEGORIES = ["all", "web", "mobile", "software-engineering"];
+const LEVELS = ["all", "beginner", "intermediate", "advanced"];
+const SORT_OPTIONS = ["newest", "oldest", "title"];
 const DEFAULT_FILTERS = { category: "all", level: "all", sort: "newest" };
 
 const projectsList = document.getElementById("projects-list");
@@ -364,20 +488,24 @@ const projectState = {
     search: ""
 };
 
-// "2026-10" -> "Oct 2026"
+// "2026-10" -> "Oct 2026" (English) or "أكتوبر 2026" (Arabic)
 function formatMonth(yearMonth) {
     const [year, month] = yearMonth.split("-").map(Number);
-    return new Date(year, month - 1).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    return new Date(year, month - 1).toLocaleDateString(getLocale(), { month: "short", year: "numeric" });
 }
 
-// Step 1–3: keep only the projects that pass every rule
+// Step 1–3: keep only the projects that pass every rule.
+// The search looks at both languages, so "UML" or "طويق" both work.
 function filterProjects(projects, { category, level, search }) {
     const searchText = search.toLowerCase();
 
     return projects.filter((project) => {
         const matchesCategory = category === "all" || project.category === category;
         const matchesLevel = level === "all" || project.level === level;
-        const searchableText = [project.title, project.description, ...project.tags].join(" ").toLowerCase();
+        const searchableText = SUPPORTED_LANGUAGES
+            .flatMap((language) => [project.title[language], project.description[language], ...project.tags[language]])
+            .join(" ")
+            .toLowerCase();
         const matchesSearch = searchText === "" || searchableText.includes(searchText);
 
         return matchesCategory && matchesLevel && matchesSearch;
@@ -393,58 +521,60 @@ function sortProjects(projects, sortBy) {
     } else if (sortBy === "oldest") {
         sorted.sort((a, b) => a.date.localeCompare(b.date));
     } else if (sortBy === "title") {
-        sorted.sort((a, b) => a.title.localeCompare(b.title));
+        sorted.sort((a, b) => a.title[currentLanguage].localeCompare(b.title[currentLanguage], currentLanguage));
     }
     return sorted;
 }
 
 function createProjectCard(project) {
+    const title = project.title[currentLanguage];
+
     // srcset lets the browser pick the small (400 px) or large image for the card size
     const image = project.image
         ? `<img src="${project.image.src}"
                 srcset="${project.image.small} 400w, ${project.image.src} ${project.image.width}w"
                 sizes="(max-width: 600px) 90vw, 280px"
-                alt="${escapeHTML(project.image.alt)}" class="project-img"
+                alt="${escapeHTML(project.image.alt[currentLanguage])}" class="project-img"
                 width="${project.image.width}" height="${project.image.height}" loading="lazy">`
-        : `<div class="project-img project-img-placeholder" aria-hidden="true">${escapeHTML(project.title.charAt(0))}</div>`;
+        : `<div class="project-img project-img-placeholder" aria-hidden="true">${escapeHTML(title.charAt(0))}</div>`;
 
-    const tags = project.tags.map((tag) => `<li>${escapeHTML(tag)}</li>`).join("");
+    const tags = project.tags[currentLanguage].map((tag) => `<li>${escapeHTML(tag)}</li>`).join("");
 
     const link = project.link
-        ? `<a class="project-link" href="${project.link}" target="_blank" rel="noopener">View code on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>`
+        ? `<a class="project-link" href="${project.link}" target="_blank" rel="noopener">${t("projects.viewCode")}<span class="visually-hidden">${t("common.newTab")}</span></a>`
         : "";
 
     return `
         <li class="project-card">
             ${image}
             <div class="project-meta">
-                <span class="badge badge-${project.level}">${LEVEL_LABELS[project.level]}</span>
-                <span>${CATEGORY_LABELS[project.category]}</span>
+                <span class="badge badge-${project.level}">${t(`level.${project.level}`)}</span>
+                <span>${t(`category.${project.category}`)}</span>
                 <span aria-hidden="true">•</span>
                 <time datetime="${project.date}">${formatMonth(project.date)}</time>
             </div>
-            <h3>${escapeHTML(project.title)}</h3>
-            <p>${escapeHTML(project.description)}</p>
-            <ul class="tag-list" aria-label="Technologies">${tags}</ul>
+            <h3>${escapeHTML(title)}</h3>
+            <p>${escapeHTML(project.description[currentLanguage])}</p>
+            <ul class="tag-list" aria-label="${t("projects.technologies")}">${tags}</ul>
             ${link}
         </li>`;
 }
 
 // Builds a specific hint, e.g. "No beginner Mobile projects yet."
 function getEmptyMessage({ category, level, search }) {
-    const levelText = level === "all" ? "" : `${LEVEL_LABELS[level].toLowerCase()} `;
-    const categoryText = category === "all" ? "" : `${CATEGORY_LABELS[category]} `;
-    const ending = search ? ` match "${search}"` : " yet";
-
-    return `No ${levelText}${categoryText}projects${ending}. Try another level or category, or reset the filters.`;
+    return t("projects.empty", {
+        level: level === "all" ? "" : t(`level.${level}`),
+        category: category === "all" ? "" : t(`category.${category}`),
+        search
+    });
 }
 
 function renderProjects() {
     const visibleProjects = sortProjects(filterProjects(PROJECTS, projectState), projectState.sort);
 
     projectsList.innerHTML = visibleProjects.map(createProjectCard).join("");
-    resultsCount.textContent = `Showing ${visibleProjects.length} of ${PROJECTS.length} projects`;
-    levelMessage.textContent = LEVEL_MESSAGES[projectState.level];
+    resultsCount.textContent = t("projects.count", { shown: visibleProjects.length, total: PROJECTS.length });
+    levelMessage.textContent = t(`levelMessage.${projectState.level}`);
 
     noProjectsMessage.hidden = visibleProjects.length > 0;
     noProjectsMessage.textContent = getEmptyMessage(projectState);
@@ -475,13 +605,13 @@ function updateProjects(changes) {
 
 function initProjects() {
     // Ignore saved values that are no longer valid (e.g. an old category)
-    if (!(projectState.category in CATEGORY_LABELS)) {
+    if (!CATEGORIES.includes(projectState.category)) {
         projectState.category = DEFAULT_FILTERS.category;
     }
-    if (!(projectState.level in LEVEL_MESSAGES)) {
+    if (!LEVELS.includes(projectState.level)) {
         projectState.level = DEFAULT_FILTERS.level;
     }
-    if (!["newest", "oldest", "title"].includes(projectState.sort)) {
+    if (!SORT_OPTIONS.includes(projectState.sort)) {
         projectState.sort = DEFAULT_FILTERS.sort;
     }
 
@@ -502,11 +632,12 @@ function initProjects() {
         updateProjects({ ...DEFAULT_FILTERS, search: "" });
     });
 
+    onLanguageChange(renderProjects);
     renderProjects();
 }
 
 /* =========================================================
-   8. GITHUB REPOSITORIES (EXTERNAL API)
+   9. GITHUB REPOSITORIES (EXTERNAL API)
    Uses the public GitHub REST API (no key needed):
    - GET /users/{username}        -> profile
    - GET /users/{username}/repos  -> repositories
@@ -523,6 +654,9 @@ const githubProfile = document.getElementById("github-profile");
 const githubStatus = document.getElementById("github-status");
 const githubRepos = document.getElementById("github-repos");
 const githubRetryButton = document.getElementById("github-retry");
+
+// What the section shows right now, so it can be redrawn in the other language
+const githubView = { state: "idle", data: null, error: null };
 
 // Fetch JSON with a time limit; throws an Error with extra details if it fails
 async function fetchJSON(url) {
@@ -547,21 +681,21 @@ async function fetchJSON(url) {
 // Turn any error into a short message a visitor can understand
 function getFriendlyErrorMessage(error) {
     if (!navigator.onLine) {
-        return "You seem to be offline. Check your internet connection and try again.";
+        return t("github.errorOffline");
     }
     if (error.name === "AbortError") {
-        return "GitHub is taking too long to respond. Please try again.";
+        return t("github.errorTimeout");
     }
     if (error.rateLimited || error.status === 403 || error.status === 429) {
-        return "GitHub's hourly request limit was reached. Please try again in a few minutes.";
+        return t("github.errorRateLimit");
     }
     if (error.status === 404) {
-        return "The GitHub profile could not be found.";
+        return t("github.errorNotFound");
     }
-    return "Sorry, my GitHub projects could not be loaded right now. Please try again later.";
+    return t("github.errorGeneric");
 }
 
-// "2026-11-02T10:00:00Z" -> "3 weeks ago"
+// "2026-11-02T10:00:00Z" -> "3 weeks ago" / "قبل 3 أسابيع"
 function timeAgo(isoDate) {
     const seconds = Math.round((new Date(isoDate) - Date.now()) / 1000);
     const units = [
@@ -572,14 +706,14 @@ function timeAgo(isoDate) {
         ["hour", 3600],
         ["minute", 60]
     ];
-    const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+    const formatter = new Intl.RelativeTimeFormat(getLocale(), { numeric: "auto" });
 
     for (const [unit, unitSeconds] of units) {
         if (Math.abs(seconds) >= unitSeconds) {
             return formatter.format(Math.round(seconds / unitSeconds), unit);
         }
     }
-    return "just now";
+    return t("github.justNow");
 }
 
 // Keep my own repositories (no forks), newest activity first
@@ -610,14 +744,16 @@ function readGitHubCache() {
 }
 
 function renderGitHubLoading() {
+    Object.assign(githubView, { state: "loading" });
     githubRetryButton.hidden = true;
     githubStatus.className = "api-status";
-    githubStatus.textContent = "Loading my latest repositories from GitHub…";
+    githubStatus.textContent = t("github.loading");
     githubRepos.setAttribute("aria-busy", "true");
     githubRepos.innerHTML = '<li class="repo-card skeleton"></li>'.repeat(3);
 }
 
 function renderGitHubError(error) {
+    Object.assign(githubView, { state: "error", error });
     githubProfile.innerHTML = "";
     githubRepos.innerHTML = "";
     githubRepos.removeAttribute("aria-busy");
@@ -626,7 +762,9 @@ function renderGitHubError(error) {
     githubRetryButton.hidden = false;
 }
 
-function renderGitHubData({ profile, repos }) {
+function renderGitHubData(data) {
+    const { profile, repos } = data;
+    Object.assign(githubView, { state: "data", data });
     githubRepos.removeAttribute("aria-busy");
     githubStatus.className = "api-status";
 
@@ -634,27 +772,27 @@ function renderGitHubData({ profile, repos }) {
         <img src="${escapeHTML(profile.avatarUrl)}" alt="" width="56" height="56" loading="lazy">
         <div>
             <p class="profile-name">${escapeHTML(profile.name)}</p>
-            <p class="profile-stats">${profile.publicRepos} public repositories · ${profile.followers} followers</p>
+            <p class="profile-stats">${t("github.stats", { repos: profile.publicRepos, followers: profile.followers })}</p>
         </div>
-        <a class="btn-pill" href="${escapeHTML(profile.url)}" target="_blank" rel="noopener">View profile<span class="visually-hidden"> on GitHub (opens in a new tab)</span></a>`;
+        <a class="btn-pill" href="${escapeHTML(profile.url)}" target="_blank" rel="noopener">${t("github.viewProfile")}<span class="visually-hidden">${t("github.viewProfileHidden")}</span></a>`;
 
     if (repos.length === 0) {
         githubRepos.innerHTML = "";
-        githubStatus.textContent = "No public repositories yet. New projects will appear here automatically.";
+        githubStatus.textContent = t("github.empty");
         return;
     }
 
-    githubStatus.textContent = `Showing my ${repos.length} most recently updated repositories.`;
+    githubStatus.textContent = t("github.showing", { count: repos.length });
     githubRepos.innerHTML = repos.map((repo) => `
         <li class="repo-card">
             <a class="repo-name" href="${escapeHTML(repo.url)}" target="_blank" rel="noopener">
-                ${escapeHTML(repo.name)}<span class="visually-hidden"> (opens in a new tab)</span>
+                ${escapeHTML(repo.name)}<span class="visually-hidden">${t("common.newTab")}</span>
             </a>
-            <p class="repo-description">${escapeHTML(repo.description || "No description yet.")}</p>
+            <p class="repo-description">${escapeHTML(repo.description || t("github.noDescription"))}</p>
             <p class="repo-meta">
                 ${repo.language ? `<span class="repo-language">${escapeHTML(repo.language)}</span>` : ""}
-                <span aria-label="${repo.stars} stars">★ ${repo.stars}</span>
-                <span>Updated ${timeAgo(repo.pushedAt)}</span>
+                <span aria-label="${t("github.stars", { count: repo.stars })}">★ ${repo.stars}</span>
+                <span>${t("github.updated", { time: timeAgo(repo.pushedAt) })}</span>
             </p>
         </li>`).join("");
 }
@@ -714,10 +852,21 @@ function initGitHub() {
     }, { rootMargin: "200px" });
 
     observer.observe(githubBody);
+
+    // Redraw whatever is on screen in the new language
+    onLanguageChange(() => {
+        if (githubView.state === "loading") {
+            renderGitHubLoading();
+        } else if (githubView.state === "error") {
+            renderGitHubError(githubView.error);
+        } else if (githubView.state === "data") {
+            renderGitHubData(githubView.data);
+        }
+    });
 }
 
 /* =========================================================
-   9. CONTACT FORM VALIDATION
+   10. CONTACT FORM VALIDATION
    Steps:
    1. Every field has its own rule (validators below).
    2. A field shows its error only after the visitor has left it
@@ -749,12 +898,11 @@ const formFields = [nameInput, emailInput, reasonSelect, projectLinkInput, messa
 const touchedFields = new Set();
 
 // A different note depending on the reason the visitor chooses
-const REASONS = {
-    job: { label: "a job or internship", note: "Great! Please mention the role and the company in your message." },
-    collaboration: { label: "a project collaboration", note: "Sounds fun! You can add a link to the project below (optional)." },
-    feedback: { label: "feedback on my portfolio", note: "Thank you! Honest feedback helps me improve." },
-    hello: { label: "saying hi", note: "Hi! I would love to hear from you." }
-};
+// (texts: reason.<id>.label and reason.<id>.note in js/i18n.js)
+const REASONS = ["job", "collaboration", "feedback", "hello"];
+
+// The last message sent, so the confirmation can be redrawn in the other language
+let lastSentMessage = null;
 
 function isValidUrl(text) {
     try {
@@ -768,39 +916,30 @@ function isValidUrl(text) {
 // Each rule returns an error message, or "" when the value is valid
 const validators = {
     name(value) {
-        if (value === "") return "Please enter your name.";
-        if (value.length < 2) return "Your name should be at least 2 characters.";
-        if (!NAME_PATTERN.test(value)) return "Please use letters only in your name.";
+        if (value === "") return t("error.nameEmpty");
+        if (value.length < 2) return t("error.nameShort");
+        if (!NAME_PATTERN.test(value)) return t("error.nameLetters");
         return "";
     },
     email(value) {
-        if (value === "") return "Please enter your email.";
-        if (!EMAIL_PATTERN.test(value)) return "Please enter a valid email, like name@example.com.";
+        if (value === "") return t("error.emailEmpty");
+        if (!EMAIL_PATTERN.test(value)) return t("error.emailInvalid");
         return "";
     },
     reason(value) {
-        return value === "" ? "Please choose a reason for your message." : "";
+        return value === "" ? t("error.reason") : "";
     },
     "project-link"(value) {
         // Only checked when the field is shown and something was typed
         if (reasonSelect.value !== "collaboration" || value === "") return "";
-        return isValidUrl(value) ? "" : "Please enter a full link that starts with https://";
+        return isValidUrl(value) ? "" : t("error.link");
     },
     message(value) {
-        if (value === "") return "Please write a message before sending.";
-        if (value.length < MESSAGE_MIN) return `Your message is too short (at least ${MESSAGE_MIN} characters).`;
-        if (value.length > MESSAGE_MAX) return `Your message is too long (at most ${MESSAGE_MAX} characters).`;
+        if (value === "") return t("error.messageEmpty");
+        if (value.length < MESSAGE_MIN) return t("error.messageShort", { min: MESSAGE_MIN });
+        if (value.length > MESSAGE_MAX) return t("error.messageLong", { max: MESSAGE_MAX });
         return "";
     }
-};
-
-// Short names for the "still needed" hint
-const FIELD_HINTS = {
-    name: "your name",
-    email: "a valid email",
-    reason: "a reason",
-    "project-link": "a valid project link",
-    message: `a message of at least ${MESSAGE_MIN} characters`
 };
 
 function showFieldResult(input, errorText) {
@@ -841,7 +980,9 @@ function updateFormState() {
     submitButton.disabled = !isValid;
     formHint.textContent = isValid
         ? ""
-        : `To enable the Send button, add ${invalidFields.map((id) => FIELD_HINTS[id]).join(", ")}.`;
+        : t("contact.hint", {
+            fields: invalidFields.map((id) => t(`hint.${id}`, { min: MESSAGE_MIN })).join(t("contact.listSeparator"))
+        });
 }
 
 function updateCharCount() {
@@ -851,10 +992,10 @@ function updateCharCount() {
 }
 
 function updateReasonSection() {
-    const reason = REASONS[reasonSelect.value];
-    const isCollaboration = reasonSelect.value === "collaboration";
+    const reason = reasonSelect.value;
+    const isCollaboration = reason === "collaboration";
 
-    reasonNote.textContent = reason ? reason.note : "";
+    reasonNote.textContent = REASONS.includes(reason) ? t(`reason.${reason}.note`) : "";
     projectLinkGroup.hidden = !isCollaboration;
 
     // When the link field is hidden again, forget what was typed in it
@@ -896,20 +1037,38 @@ function handleContactSubmit(event) {
     }
 
     // Step 2: simulate sending (there is no backend)
-    const name = nameInput.value.trim();
-    const email = emailInput.value.trim();
-    const reasonLabel = REASONS[reasonSelect.value].label;
+    lastSentMessage = {
+        name: nameInput.value.trim(),
+        email: emailInput.value.trim(),
+        reason: reasonSelect.value
+    };
 
     submitButton.disabled = true;
-    submitButton.textContent = "Sending…";
+    submitButton.dataset.sending = "true";
+    submitButton.textContent = t("contact.sending");
     formMessage.textContent = "";
 
     setTimeout(() => {
         // Step 3: confirm and clear the form
-        submitButton.textContent = "Send Message";
+        delete submitButton.dataset.sending;
+        submitButton.textContent = t("contact.send");
         resetContactForm();
-        formMessage.textContent = `Thank you, \u2068${name}\u2069! Your message about ${reasonLabel} has been received. I will reply to ${email}.`;
+        renderSuccessMessage();
+        document.dispatchEvent(new CustomEvent("garden:step", { detail: "message" }));
     }, 1000);
+}
+
+function renderSuccessMessage() {
+    if (!lastSentMessage) {
+        formMessage.textContent = "";
+        return;
+    }
+    const { name, email, reason } = lastSentMessage;
+    formMessage.textContent = t("contact.success", {
+        name: `\u2068${name}\u2069`,
+        reason: t(`reason.${reason}.label`),
+        email: `\u2068${email}\u2069`
+    });
 }
 
 function initContactForm() {
@@ -923,6 +1082,7 @@ function initContactForm() {
         });
 
         input.addEventListener("input", () => {
+            lastSentMessage = null;
             formMessage.textContent = "";
             updateFormState();
         });
@@ -943,11 +1103,19 @@ function initContactForm() {
         updateFormState();
     });
 
+    // Redraw notes, errors, the hint, the button and the confirmation
+    onLanguageChange(() => {
+        updateReasonSection();
+        updateFormState();
+        submitButton.textContent = submitButton.dataset.sending ? t("contact.sending") : t("contact.send");
+        renderSuccessMessage();
+    });
+
     resetContactForm();
 }
 
 /* =========================================================
-   10. TIME-ON-SITE TIMER
+   11. TIME-ON-SITE TIMER
    The start time is saved in sessionStorage, so reloading the
    page keeps counting. A new tab or browser session starts at 0.
    ========================================================= */
@@ -989,8 +1157,10 @@ function initTimer() {
 }
 
 /* =========================================================
-   11. START THE APP
+   12. START THE APP
    The script is loaded with "defer", so the HTML is ready here.
+   initLanguage() runs last, so every part has registered its
+   onLanguageChange() function before the first translation.
    ========================================================= */
 initTheme();
 initVisitor();
@@ -999,3 +1169,4 @@ initProjects();
 initGitHub();
 initContactForm();
 initTimer();
+initLanguage();

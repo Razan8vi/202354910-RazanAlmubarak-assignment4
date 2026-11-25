@@ -4,26 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Razan Almubarak | Personal Portfolio</title>
-    <meta name="description" content="Portfolio of Razan Almubarak, a Software Engineering student at KFUPM: projects, GitHub repositories and contact form.">
+    <meta name="description" content="Portfolio of Razan Almubarak, a Software Engineering student at KFUPM, in English and Arabic: projects, GitHub repositories and contact form.">
 
     <!-- Connect early to the font and API servers to save time -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://api.github.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
     <!-- Small inline icon, so the browser does not request a missing favicon.ico -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23E0217B'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='white' font-family='Arial'%3ER%3C/text%3E%3C/svg%3E">
 
     <link rel="stylesheet" href="css/styles.css">
 
-    <!-- Apply the saved (or system) theme before the page is drawn,
-         so the page never flashes in the wrong colors -->
+    <!-- Apply the saved theme and language before the page is drawn,
+         so the page never flashes in the wrong colors or direction -->
     <script>
         try {
             const savedTheme = JSON.parse(localStorage.getItem("portfolio.theme"));
             const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
             document.documentElement.dataset.theme = savedTheme || (prefersLight ? "light" : "dark");
+
+            if (JSON.parse(localStorage.getItem("portfolio.language")) === "ar") {
+                document.documentElement.lang = "ar";
+                document.documentElement.dir = "rtl";
+            }
         } catch (error) {
             document.documentElement.dataset.theme = "dark";
         }
@@ -35,11 +40,22 @@
 
         <div class="top-bar">
             <nav class="site-nav" aria-label="Main navigation">
-                <a href="#about">About</a>
-                <a href="#projects">Projects</a>
-                <a href="#github">GitHub</a>
-                <a href="#contact">Contact</a>
+                <a href="#about" data-i18n="nav.about">About</a>
+                <a href="#projects" data-i18n="nav.projects">Projects</a>
+                <a href="#github" data-i18n="nav.github">GitHub</a>
+                <a href="#contact" data-i18n="nav.contact">Contact</a>
             </nav>
+
+            <!-- Arabic / English (the choice is saved in localStorage) -->
+            <button
+                id="language-toggle"
+                class="btn-pill"
+                type="button"
+                lang="ar"
+                data-i18n="lang.button"
+                data-i18n-aria-label="lang.buttonLabel"
+                aria-label="Switch the site to Arabic"
+            >العربية</button>
 
             <!-- Light / dark mode (the choice is saved in localStorage) -->
             <button id="theme-toggle" class="btn-pill" type="button" aria-pressed="false">
@@ -48,8 +64,8 @@
         </div>
 
         <div class="hero-inner">
-            <h1>Razan Almubarak</h1>
-            <p class="tagline">Software Engineering Student &mdash; Building Applications and Creating Meaningful Digital Experiences</p>
+            <h1 data-i18n="hero.name">Razan Almubarak</h1>
+            <p class="tagline" data-i18n="hero.tagline">Software Engineering Student &mdash; Building Applications and Creating Meaningful Digital Experiences</p>
 
             <!-- Filled by JavaScript: time of day + visitor name + visit count -->
             <p id="greeting" class="greeting" aria-live="polite"></p>
@@ -57,7 +73,7 @@
             <!-- Visitor name (saved in localStorage) -->
             <div class="visitor-area">
                 <form id="visitor-form" class="visitor-form" novalidate>
-                    <label for="visitor-name">What should I call you?</label>
+                    <label for="visitor-name" data-i18n="visitor.label">What should I call you?</label>
                     <input
                         type="text"
                         id="visitor-name"
@@ -65,12 +81,13 @@
                         maxlength="30"
                         autocomplete="given-name"
                         placeholder="Your first name"
+                        data-i18n-placeholder="visitor.placeholder"
                     >
-                    <button type="submit" class="btn-pill">Save</button>
+                    <button type="submit" class="btn-pill" data-i18n="visitor.save">Save</button>
                     <p id="visitor-error" class="error-message" aria-live="polite"></p>
                 </form>
 
-                <button id="change-name" class="link-button" type="button" hidden>
+                <button id="change-name" class="link-button" type="button" data-i18n="visitor.change" hidden>
                     Not you? Change name
                 </button>
             </div>
@@ -81,19 +98,19 @@
 
         <section id="about" class="section" aria-labelledby="about-title">
             <div class="section-header">
-                <h2 id="about-title">About Me</h2>
+                <h2 id="about-title" data-i18n="about.title">About Me</h2>
                 <button
                     type="button"
                     class="btn-pill"
                     data-toggle-section="about"
-                    data-label="About Me"
+                    data-label-key="about.title"
                     aria-controls="about-body"
                     aria-expanded="true"
                 >Hide</button>
             </div>
 
             <div id="about-body" class="about-content">
-                <p>
+                <p data-i18n="about.text">
                     Hi, I'm Razan, a Software Engineering student with an interest in web development.
                     I enjoy turning ideas into simple, functional websites, and I am continuously
                     developing my skills in HTML, CSS, and JavaScript. I am especially interested in
@@ -104,12 +121,12 @@
 
         <section id="projects" class="section" aria-labelledby="projects-title">
             <div class="section-header">
-                <h2 id="projects-title">Projects</h2>
+                <h2 id="projects-title" data-i18n="projects.title">Projects</h2>
                 <button
                     type="button"
                     class="btn-pill"
                     data-toggle-section="projects"
-                    data-label="Projects"
+                    data-label-key="projects.title"
                     aria-controls="projects-body"
                     aria-expanded="true"
                 >Hide</button>
@@ -119,42 +136,43 @@
                 <!-- Filters: category + level + search, then sort -->
                 <div class="project-controls">
                     <div>
-                        <p class="control-label" id="category-label">Category</p>
+                        <p class="control-label" id="category-label" data-i18n="projects.category">Category</p>
                         <div class="chip-group" role="group" aria-labelledby="category-label">
-                            <button type="button" class="btn-pill" data-category="all" aria-pressed="true">All</button>
-                            <button type="button" class="btn-pill" data-category="web" aria-pressed="false">Web</button>
-                            <button type="button" class="btn-pill" data-category="mobile" aria-pressed="false">Mobile</button>
-                            <button type="button" class="btn-pill" data-category="software-engineering" aria-pressed="false">Software Engineering</button>
+                            <button type="button" class="btn-pill" data-category="all" aria-pressed="true" data-i18n="category.all">All</button>
+                            <button type="button" class="btn-pill" data-category="web" aria-pressed="false" data-i18n="category.web">Web</button>
+                            <button type="button" class="btn-pill" data-category="mobile" aria-pressed="false" data-i18n="category.mobile">Mobile</button>
+                            <button type="button" class="btn-pill" data-category="software-engineering" aria-pressed="false" data-i18n="category.software-engineering">Software Engineering</button>
                         </div>
                     </div>
 
                     <div class="control-row">
                         <div class="control-group">
-                            <label for="level-select">Level</label>
+                            <label for="level-select" data-i18n="projects.level">Level</label>
                             <select id="level-select" class="field">
-                                <option value="all">All levels</option>
-                                <option value="beginner">Beginner</option>
-                                <option value="intermediate">Intermediate</option>
-                                <option value="advanced">Advanced</option>
+                                <option value="all" data-i18n="level.all">All levels</option>
+                                <option value="beginner" data-i18n="level.beginner">Beginner</option>
+                                <option value="intermediate" data-i18n="level.intermediate">Intermediate</option>
+                                <option value="advanced" data-i18n="level.advanced">Advanced</option>
                             </select>
                         </div>
 
                         <div class="control-group">
-                            <label for="sort-select">Sort by</label>
+                            <label for="sort-select" data-i18n="projects.sort">Sort by</label>
                             <select id="sort-select" class="field">
-                                <option value="newest">Newest first</option>
-                                <option value="oldest">Oldest first</option>
-                                <option value="title">Title (A&ndash;Z)</option>
+                                <option value="newest" data-i18n="sort.newest">Newest first</option>
+                                <option value="oldest" data-i18n="sort.oldest">Oldest first</option>
+                                <option value="title" data-i18n="sort.title">Title (A&ndash;Z)</option>
                             </select>
                         </div>
 
                         <div class="control-group">
-                            <label for="project-search">Search</label>
+                            <label for="project-search" data-i18n="projects.search">Search</label>
                             <input
                                 type="search"
                                 id="project-search"
                                 class="field"
                                 placeholder="e.g. API, UML, Arabic"
+                                data-i18n-placeholder="projects.searchPlaceholder"
                             >
                         </div>
                     </div>
@@ -165,7 +183,7 @@
 
                 <div class="results-bar">
                     <p id="results-count" aria-live="polite"></p>
-                    <button id="reset-filters" type="button" class="link-button" hidden>Reset filters</button>
+                    <button id="reset-filters" type="button" class="link-button" data-i18n="projects.reset" hidden>Reset filters</button>
                 </div>
 
                 <!-- Project cards are created by JavaScript from the PROJECTS list -->
@@ -178,19 +196,19 @@
         <!-- Live data from the GitHub REST API -->
         <section id="github" class="section" aria-labelledby="github-title">
             <div class="section-header">
-                <h2 id="github-title">Latest on GitHub</h2>
+                <h2 id="github-title" data-i18n="github.title">Latest on GitHub</h2>
                 <button
                     type="button"
                     class="btn-pill"
                     data-toggle-section="github"
-                    data-label="Latest on GitHub"
+                    data-label-key="github.title"
                     aria-controls="github-body"
                     aria-expanded="true"
                 >Hide</button>
             </div>
 
             <div id="github-body">
-                <p class="section-intro">
+                <p class="section-intro" data-i18n="github.intro">
                     These repositories are loaded live from my GitHub account, so this list
                     stays up to date without editing the page.
                 </p>
@@ -198,19 +216,19 @@
                 <div id="github-profile" class="github-profile"></div>
                 <p id="github-status" class="api-status" role="status"></p>
                 <ul id="github-repos" class="repo-list"></ul>
-                <button id="github-retry" type="button" class="btn-pill" hidden>Try again</button>
+                <button id="github-retry" type="button" class="btn-pill" data-i18n="github.retry" hidden>Try again</button>
             </div>
         </section>
 
         <section id="contact" class="section" aria-labelledby="contact-title">
             <div class="section-header">
-                <h2 id="contact-title">Contact Me</h2>
+                <h2 id="contact-title" data-i18n="contact.title">Contact Me</h2>
             </div>
 
             <!-- novalidate: JavaScript shows its own clear error messages -->
             <form id="contact-form" class="contact-form" novalidate>
                 <div class="form-group">
-                    <label for="name">Name</label>
+                    <label for="name" data-i18n="contact.name">Name</label>
                     <input
                         type="text"
                         id="name"
@@ -219,6 +237,7 @@
                         maxlength="50"
                         autocomplete="name"
                         placeholder="Your name"
+                        data-i18n-placeholder="contact.namePlaceholder"
                         aria-describedby="name-error"
                         required
                     >
@@ -226,7 +245,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="email">Email</label>
+                    <label for="email" data-i18n="contact.email">Email</label>
                     <input
                         type="email"
                         id="email"
@@ -242,13 +261,13 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="reason">Reason for contacting me</label>
+                    <label for="reason" data-i18n="contact.reason">Reason for contacting me</label>
                     <select id="reason" name="reason" class="field" aria-describedby="reason-error reason-note" required>
-                        <option value="">Choose a reason&hellip;</option>
-                        <option value="job">Job or internship opportunity</option>
-                        <option value="collaboration">Project collaboration</option>
-                        <option value="feedback">Feedback on my portfolio</option>
-                        <option value="hello">Just saying hi</option>
+                        <option value="" data-i18n="contact.reasonChoose">Choose a reason&hellip;</option>
+                        <option value="job" data-i18n="contact.reasonJob">Job or internship opportunity</option>
+                        <option value="collaboration" data-i18n="contact.reasonCollaboration">Project collaboration</option>
+                        <option value="feedback" data-i18n="contact.reasonFeedback">Feedback on my portfolio</option>
+                        <option value="hello" data-i18n="contact.reasonHello">Just saying hi</option>
                     </select>
                     <p id="reason-error" class="error-message" aria-live="polite"></p>
                     <!-- Changes depending on the chosen reason -->
@@ -257,7 +276,7 @@
 
                 <!-- Only shown when the reason is "Project collaboration" -->
                 <div id="project-link-group" class="form-group" hidden>
-                    <label for="project-link">Project link <span class="optional">(optional)</span></label>
+                    <label for="project-link"><span data-i18n="contact.link">Project link</span> <span class="optional" data-i18n="contact.optional">(optional)</span></label>
                     <input
                         type="url"
                         id="project-link"
@@ -270,7 +289,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="message">Message</label>
+                    <label for="message" data-i18n="contact.message">Message</label>
                     <textarea
                         id="message"
                         name="message"
@@ -278,6 +297,7 @@
                         rows="5"
                         maxlength="500"
                         placeholder="Write your message here..."
+                        data-i18n-placeholder="contact.messagePlaceholder"
                         aria-describedby="message-error char-count"
                         required
                     ></textarea>
@@ -285,7 +305,7 @@
                     <p id="message-error" class="error-message" aria-live="polite"></p>
                 </div>
 
-                <button id="submit-button" type="submit" class="btn-primary" disabled>Send Message</button>
+                <button id="submit-button" type="submit" class="btn-primary" data-i18n="contact.send" disabled>Send Message</button>
                 <p id="form-hint" class="form-hint" aria-live="polite"></p>
                 <p id="form-message" class="success-message" role="status"></p>
             </form>
@@ -294,11 +314,13 @@
     </main>
 
     <footer class="site-footer">
-        <p>&copy; Razan Almubarak. Built for SWE 363 &ndash; Assignment 3.</p>
+        <p data-i18n="footer.copy">&copy; Razan Almubarak. Built for SWE 363 &ndash; Assignment 4.</p>
         <!-- Updated every second by JavaScript -->
-        <p class="timer">You have been on my portfolio for <span id="time-on-site">00:00</span></p>
+        <p class="timer"><span data-i18n="footer.timer">You have been on my portfolio for</span> <span id="time-on-site" dir="ltr">00:00</span></p>
     </footer>
 
+    <!-- Translations first, then the app (both run after the HTML is parsed) -->
+    <script src="js/i18n.js" defer></script>
     <script src="js/script.js" defer></script>
 </body>
 </html>
